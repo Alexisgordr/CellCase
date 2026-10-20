@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Interfaz en español (D-045). -->
+<resources>
+    <string name="cases_title">CellCase · Expedientes</string>
+    <string name="cases_empty">No hay expedientes. Crea uno e importa las exportaciones de ICdetector con el selector de archivos. Todo se guarda solo en este teléfono; la aplicación no usa red ni cuentas.</string>
+    <string name="case_title">Expediente</string>
+    <string name="case_load_failed">No se ha podido cargar el expediente.</string>
+    <string name="case_declared_device">Dispositivo de captura declarado: %1$s</string>
+    <string name="case_declared_this_suffix">" (declarado: este móvil)"</string>
+    <string name="case_declared_other_suffix">" (declarado: otro dispositivo)"</string>
+    <string name="case_detected_device">Dispositivo de análisis detectado al crear el expediente: %1$s · zona %2$s. No acredita el origen de los archivos.</string>
+    <string name="case_zone_confirmed">Zona horaria de captura: %1$s — supuesto confirmado por el usuario</string>
+    <string name="case_zone_unconfirmed">Zona horaria de captura: %1$s — supuesto SIN CONFIRMAR por el usuario</string>
+    <string name="case_zone_created">Zona: %1$s · creado %2$s</string>
+    <string name="case_origin">Origen de los datos: %1$s</string>
+    <string name="case_origin_short">Origen: %1$s</string>
+    <string name="case_origin_inherited_suffix">" (declaración heredada; revísala)"</string>
+    <string name="case_origin_inherited">Esta declaración viene de una versión anterior (casilla «datos sintéticos»). Revísala.</string>
+    <string name="case_origin_conflict">Declarado real, pero hay indicios automáticos de datos de prueba en: %1$s. Revisa la declaración.</string>
+    <string name="case_discrepancy">Aviso: %1$s</string>
+    <string name="device_not_declared">no declarado</string>
+    <string name="device_this_phone">este móvil</string>
+    <string name="origin_title">Origen de los datos</string>
+    <string name="origin_undetermined">No determinado (todavía no lo declaro)</string>
+    <string name="origin_real">Reales: capturas de un teléfono real. Es una declaración mía; no verifica la autenticidad.</string>
+    <string name="origin_synthetic">Sintéticos: datos de prueba generados.</string>
+    <string name="origin_mixed">Mixtos: datos reales y sintéticos en el mismo expediente.</string>
+    <string name="origin_short_real">real declarado</string>
+    <string name="origin_short_synthetic">sintético</string>
+    <string name="origin_short_mixed">mixto</string>
+    <string name="origin_short_undetermined">no determinado</string>
+    <string name="action_new_case">Nuevo expediente</string>
+    <string name="action_language">Idioma</string>
+    <string name="action_open">Abrir</string>
+    <string name="action_delete">Eliminar</string>
+    <string name="action_create">Crear</string>
+    <string name="action_save">Guardar</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_close">Cerrar</string>
+    <string name="action_close_summary">Cerrar resumen</string>
+    <string name="action_back">‹ Volver</string>
+    <string name="action_edit">Editar</string>
+    <string name="action_origin">Origen</string>
+    <string name="action_add_files">Añadir archivos</string>
+    <string name="action_verify_originals">Comprobar originales</string>
+    <string name="action_save_period">Guardar periodo</string>
+    <string name="action_remove">Quitar</string>
+    <string name="action_save_notes">Guardar anotaciones</string>
+    <string name="action_generate_pdf">Generar PDF</string>
+    <string name="action_save_copy">Guardar copia</string>
+    <string name="language_title">Idioma de la aplicación</string>
+    <string name="language_system">Seguir el idioma del sistema</string>
+    <string name="language_spanish">Español</string>
+    <string name="language_english">English</string>
+    <string name="language_note">Solo cambia los textos de la pantalla. No cambian los expedientes, los archivos ni los informes guardados. El idioma de cada informe se elige al generarlo.</string>
+    <string name="form_new_title">Nuevo expediente</string>
+    <string name="form_edit_title">Editar expediente</string>
+    <string name="form_name">Nombre del expediente</string>
+    <string name="form_description">Descripción (opcional)</string>
+    <string name="form_detected_title">Dispositivo de análisis detectado</string>
+    <string name="form_not_available">No disponible</string>
+    <string name="form_detected_note">Es el teléfono que ejecuta CellCase. Detectarlo no demuestra que las capturas procedan de él.</string>
+    <string name="form_source_title">Origen de las capturas (declaración tuya)</string>
+    <string name="form_source_this">Las capturas proceden de este móvil</string>
+    <string name="form_source_other">Proceden de otro dispositivo</string>
+    <string name="form_source_none">No lo declaro</string>
+    <string name="form_other_device">Dispositivo de captura (marca y modelo)</string>
+    <string name="form_zone">Zona horaria durante la captura</string>
+    <string name="form_zone_invalid">Zona no válida (formato Región/Ciudad).</string>
+    <string name="form_zone_suggested">Sugerida: la zona actual de este teléfono (%1$s). La zona actual no prueba la usada al capturar.</string>
+    <string name="form_unknown">desconocida</string>
+    <string name="form_zone_confirm">Confirmo que el teléfono de captura usaba esta zona. Se guarda como supuesto declarado.</string>
+    <string name="delete_title">¿Eliminar «%1$s»?</string>
+    <string name="delete_intro">Se borrará de este teléfono:</string>
+    <string name="delete_case_item">• El expediente y sus anotaciones, periodo y opciones.</string>
+    <string name="delete_records_item">• Los registros derivados: análisis, incidencias e historial de informes.</string>
+    <string name="delete_records_item_counts">• Los registros derivados: análisis, incidencias e historial de informes (%1$s, %2$s).</string>
+    <string name="delete_copies_item">• Las copias privadas de los archivos importados y los PDF guardados dentro de CellCase.</string>
+    <string name="delete_copies_item_size">• Las copias privadas de los archivos importados y los PDF guardados dentro de CellCase (%1$s).</string>
+    <string name="delete_not_deleted">No se borran los archivos originales que elegiste con el selector ni los PDF que guardaste fuera de CellCase.</string>
+    <string name="delete_irreversible">Esta acción no se puede deshacer.</string>
+    <string name="files_title">Archivos</string>
+    <string name="files_help">Puedes seleccionar varios archivos de ICdetector a la vez: los CSV y ZIP exportados (Historial, Radio, Topología, Stable-Site, Geometría y casos forenses, de la 2.10.5 o la 3.0) o la copia de seguridad (.icdbackup) de ICdetector 3.0.0, que los contiene todos. Puedes añadir más después. Cada archivo se procesa por separado; un archivo idéntico (mismo SHA-256) no se cuenta dos veces.</string>
+    <string name="batch_title">Resultado de la importación</string>
+    <string name="batch_already_present">Ya presente: es idéntico (mismo SHA-256) a «%1$s». No se importa ni se cuenta otra vez.</string>
+    <string name="batch_failed">%1$s. El resto de archivos no se ve afectado.</string>
+    <string name="zip_missing_listed">Listadas en SHA256SUMS pero ausentes: %1$s</string>
+    <string name="zip_unlisted">No listadas en SHA256SUMS: %1$s</string>
+    <string name="issues_loading">Cargando incidencias…</string>
+    <string name="issues_none">Sin incidencias de validación.</string>
+    <string name="issues_examples">Ejemplos: %1$s</string>
+    <string name="import_tap_hint">Toca para ver el contenido y las incidencias.</string>
+    <string name="severity_error">Error</string>
+    <string name="severity_warning">Aviso</string>
+    <string name="severity_info">Información</string>
+    <string name="duplicates_title">Revisión de duplicados</string>
+    <string name="duplicates_note">Revisa si son exportaciones solapadas del mismo teléfono. CellCase no borra ningún archivo.</string>
+    <string name="episodes_title">Incidencias</string>
+    <string name="episodes_none">No hay incidencias: no hay señales de ICdetector, casos forenses ni episodios de Stable-Site con hora exacta.</string>
+    <string name="episodes_status">Estado: %1$s</string>
+    <string name="episodes_counts">Revisión prioritaria: %1$d · para revisar: %2$d · contexto: %3$d.</string>
+    <string name="episodes_priority_note">La prioridad sigue criterios explícitos (alarma de ICdetector, comportamiento comprobado en las mediciones, recurrencia o persistencia, calidad de los datos); no es una probabilidad ni una atribución.</string>
+    <string name="episode_line">E%1$d · %2$s · interés técnico: %3$s · %4$s</string>
+    <string name="episode_subthreshold">solo sub-umbral</string>
+    <string name="history_title">Historial: periodo y calidad</string>
+    <string name="history_none">No hay ningún historial importado. Los demás formatos se analizan igualmente.</string>
+    <string name="history_period">Del %1$s al %2$s (hora local del teléfono)</string>
+    <string name="history_times">Instante UTC único: %1$s · ambiguas: %2$d · inexistentes: %3$d</string>
+    <string name="history_valid">Válidos — GNSS %1$s · TA %2$s · RSRQ %3$s · SINR %4$s · estado de servicio %5$s</string>
+    <string name="history_sentinels">Centinelas tratados como ausentes: %1$s · filas descartadas por estructura: %2$d</string>
+    <string name="history_gaps">Intervalos sin registros de 60 min o más: %1$d</string>
+    <string name="history_gaps_not_evaluable">Intervalos sin registros: no evaluable sin zona confirmada.</string>
+    <string name="history_collector">Resultados de ICdetector (se citan, no se recalculan). Filas con motivo: %1$d · sub-umbral: %2$d.</string>
+    <string name="history_in_period">Dentro del periodo de interés: %1$s filas; sin instante único: %2$d</string>
+    <string name="period_title">Periodo de interés (opcional)</string>
+    <string name="period_help">Horas locales en la zona declarada (%1$s).</string>
+    <string name="period_label">Descripción</string>
+    <string name="period_start">Inicio %1$s</string>
+    <string name="period_end">Fin %1$s</string>
+    <string name="period_default_label">Periodo de interés</string>
+    <string name="period_bad_format">Formato de fecha no válido: «%1$s».</string>
+    <string name="period_ambiguous">«%1$s» es ambigua por el cambio de horario; elige otra hora.</string>
+    <string name="period_nonexistent">«%1$s» no existe en la zona declarada (cambio de horario).</string>
+    <string name="period_confirm_zone">Confirma la zona horaria del expediente.</string>
+    <string name="period_end_before_start">El fin es anterior al inicio.</string>
+    <string name="notes_title">Anotaciones del analista</string>
+    <string name="notes_help">Aparecen en el informe en una sección propia, separadas del texto automático, y nunca se traducen.</string>
+    <string name="report_title">Informe PDF</string>
+    <string name="report_mode">Modalidad</string>
+    <string name="report_mode_explained">Explicado (recomendado): para personas sin conocimientos técnicos; responde qué permiten concluir los datos y qué hacer.</string>
+    <string name="report_mode_full">Técnico completo: incidencias, mediciones, metodología, fuentes, calidad, referencias, hashes y reglas.</string>
+    <string name="report_same_analysis">Las dos usan el mismo análisis y llegan a la misma conclusión sobre posibles estaciones base falsas.</string>
+    <string name="report_language">Idioma del informe</string>
+    <string name="report_language_note">Independiente del idioma de la aplicación. Solo cambia la presentación: los hallazgos, las prioridades y las conclusiones son los mismos.</string>
+    <string name="report_coordinates">Coordenadas en el informe</string>
+    <string name="coords_omit">Omitir</string>
+    <string name="coords_round2">Redondear (~1 km)</string>
+    <string name="coords_round3">Redondear (~100 m)</string>
+    <string name="coords_full">Completas</string>
+    <string name="report_mask_ids">Enmascarar TAC y CID</string>
+    <string name="report_rounding_note">El redondeo es solo visual: los originales conservan la precisión completa.</string>
+    <string name="report_outdated">Generado con una configuración previa: %1$s. No refleja el análisis actual.</string>
+    <string name="mode_explained">Explicado</string>
+    <string name="mode_full">Técnico completo</string>
+    <string name="mode_summary_old">Resumido (versión anterior)</string>
+    <string name="import_counts">%1$s, %2$s, %3$s</string>
+    <string name="notice_import_done">Selección procesada: %1$s. Detalle en «Resultado de la importación».</string>
+    <string name="notice_import_cancelled">Importación cancelada. Completados y conservados: %1$s (%2$s). Pendientes: %3$s. El archivo en curso no se ha guardado; puedes volver a añadirlo.</string>
+    <string name="notice_originals_bad">No coinciden: %1$s</string>
+    <string name="notice_reanalysed">Análisis recalculado. Los informes anteriores se conservan y quedan marcados como generados con una configuración previa.</string>
+    <string name="notice_report_cancelled">Generación cancelada: no se ha guardado ningún informe.</string>
+    <string name="notice_exported">Copia guardada.</string>
+    <string name="notice_cancelled">Operación cancelada.</string>
+    <string name="notice_busy">Ya hay una operación en curso.</string>
+    <string name="notice_error">Error: %1$s</string>
+    <string name="notice_create_failed">No se pudo crear el expediente: %1$s</string>
+    <string name="notice_case_deleted">Expediente eliminado.</string>
+    <string name="notice_delete_failed">No se pudo eliminar: %1$s</string>
+    <string name="busy_loading">Cargando y analizando el expediente</string>
+    <string name="busy_reanalysing">Recalculando el análisis conjunto…</string>
+    <string name="busy_verifying">Comprobando copias de los originales</string>
+    <string name="busy_deleting">Eliminando el expediente</string>
+    <string name="busy_report_explained">Generando informe explicado</string>
+    <string name="busy_report_full">Generando informe técnico completo</string>
+    <string name="busy_layout">Maquetando páginas…</string>
+    <string name="busy_exporting">Guardando copia del informe</string>
+    <string name="busy_reading">Leyendo %1$d/%2$d: %3$s</string>
+    <string name="busy_analysing">Analizando episodios…</string>
+    <string name="error_case_missing">El expediente no existe.</string>
+    <string name="error_open_file">No se pudo abrir el archivo.</string>
+    <string name="error_open_target">No se pudo abrir el destino.</string>
+    <string name="error_delete_move">No se pudo mover la carpeta privada del expediente; no se ha borrado nada.</string>
+    <plurals name="history_combined">
+        <item quantity="one">Se combina %1$d historial.</item>
+        <item quantity="many">Se combinan %1$d historiales.</item>
+        <item quantity="other">Se combinan %1$d historiales.</item>
+    </plurals>
+    <plurals name="duplicates_forensic">
+        <item quantity="one">Caso forense %2$s: %1$d versión exportada (%3$s). Se conserva; detalle en el informe técnico.</item>
+        <item quantity="many">Caso forense %2$s: %1$d versiones exportadas (%3$s). Se conservan todas; detalle en el informe técnico.</item>
+        <item quantity="other">Caso forense %2$s: %1$d versiones exportadas (%3$s). Se conservan todas; detalle en el informe técnico.</item>
+    </plurals>
+    <plurals name="busy_importing">
+        <item quantity="one">Importando %1$d archivo</item>
+        <item quantity="many">Importando %1$d archivos</item>
+        <item quantity="other">Importando %1$d archivos</item>
+    </plurals>
+    <plurals name="files_count">
+        <item quantity="one">%1$d archivo</item>
+        <item quantity="many">%1$d archivos</item>
+        <item quantity="other">%1$d archivos</item>
+    </plurals>
+    <plurals name="files_imported">
+        <item quantity="one">%1$d importado</item>
+        <item quantity="many">%1$d importados</item>
+        <item quantity="other">%1$d importados</item>
+    </plurals>
+    <plurals name="files_not_imported">
+        <item quantity="one">%1$d sin importar</item>
+        <item quantity="many">%1$d sin importar</item>
+        <item quantity="other">%1$d sin importar</item>
+    </plurals>
+    <plurals name="files_already_present">
+        <item quantity="one">%1$d ya presente</item>
+        <item quantity="many">%1$d ya presentes</item>
+        <item quantity="other">%1$d ya presentes</item>
+    </plurals>
+    <plurals name="notice_originals_ok">
+        <item quantity="one">La copia conservada (%1$d) coincide con el SHA-256 registrado al importar. Esto solo demuestra que no ha cambiado desde entonces.</item>
+        <item quantity="many">Las %1$d copias conservadas coinciden con el SHA-256 registrado al importar. Esto solo demuestra que no han cambiado desde entonces.</item>
+        <item quantity="other">Las %1$d copias conservadas coinciden con el SHA-256 registrado al importar. Esto solo demuestra que no han cambiado desde entonces.</item>
+    </plurals>
+    <plurals name="notice_report_done">
+        <item quantity="one">Informe generado: %1$d página. Usa «Guardar copia» para exportarlo.</item>
+        <item quantity="many">Informe generado: %1$d páginas. Usa «Guardar copia» para exportarlo.</item>
+        <item quantity="other">Informe generado: %1$d páginas. Usa «Guardar copia» para exportarlo.</item>
+    </plurals>
+    <plurals name="case_indicator_files">
+        <item quantity="one">Indicios automáticos de datos de prueba en %1$d archivo. Los indicios no deciden el origen.</item>
+        <item quantity="many">Indicios automáticos de datos de prueba en %1$d archivos. Los indicios no deciden el origen.</item>
+        <item quantity="other">Indicios automáticos de datos de prueba en %1$d archivos. Los indicios no deciden el origen.</item>
+    </plurals>
+    <plurals name="zip_entries">
+        <item quantity="one">Contenido del ZIP (%1$d entrada)</item>
+        <item quantity="many">Contenido del ZIP (%1$d entradas)</item>
+        <item quantity="other">Contenido del ZIP (%1$d entradas)</item>
+    </plurals>
+    <plurals name="rows_count">
+        <item quantity="one">%1$s fila</item>
+        <item quantity="many">%1$s filas</item>
+        <item quantity="other">%1$s filas</item>
+    </plurals>
+    <plurals name="duplicates_rows">
+        <item quantity="one">%1$s fila del historial aparece en más de un archivo con las mismas columnas inmutables. En el análisis se cuenta una vez; los archivos se conservan.</item>
+        <item quantity="many">%1$s filas del historial aparecen en más de un archivo con las mismas columnas inmutables. En el análisis se cuentan una vez; los archivos se conservan.</item>
+        <item quantity="other">%1$s filas del historial aparecen en más de un archivo con las mismas columnas inmutables. En el análisis se cuentan una vez; los archivos se conservan.</item>
+    </plurals>
+    <plurals name="duplicates_revised">
+        <item quantity="one">%1$s difiere en verificación o coordenadas (posible revisión posterior de ICdetector); se conservan ambos valores.</item>
+        <item quantity="many">%1$s difieren en verificación o coordenadas (posible revisión posterior de ICdetector); se conservan ambos valores.</item>
+        <item quantity="other">%1$s difieren en verificación o coordenadas (posible revisión posterior de ICdetector); se conservan ambos valores.</item>
+    </plurals>
+    <plurals name="duplicates_radio">
+        <item quantity="one">%1$s evento de Radio idéntico en varias exportaciones se cuenta una vez.</item>
+        <item quantity="many">%1$s eventos de Radio idénticos en varias exportaciones se cuentan una vez.</item>
+        <item quantity="other">%1$s eventos de Radio idénticos en varias exportaciones se cuentan una vez.</item>
+    </plurals>
+    <plurals name="episodes_only_context">
+        <item quantity="one">Ninguna incidencia merece revisión; %1$d observación de contexto.</item>
+        <item quantity="many">Ninguna incidencia merece revisión; %1$d observaciones de contexto.</item>
+        <item quantity="other">Ninguna incidencia merece revisión; %1$d observaciones de contexto.</item>
+    </plurals>
+    <plurals name="observations_count">
+        <item quantity="one">%1$d observación</item>
+        <item quantity="many">%1$d observaciones</item>
+        <item quantity="other">%1$d observaciones</item>
+    </plurals>
+    <plurals name="recurs_on_days">
+        <item quantity="one">se repite en %1$d día</item>
+        <item quantity="many">se repite en %1$d días</item>
+        <item quantity="other">se repite en %1$d días</item>
+    </plurals>
+    <plurals name="analyses_missing">
+        <item quantity="one">Análisis no disponibles: %1$d (detalle en el informe técnico completo).</item>
+        <item quantity="many">Análisis no disponibles: %1$d (detalle en el informe técnico completo).</item>
+        <item quantity="other">Análisis no disponibles: %1$d (detalle en el informe técnico completo).</item>
+    </plurals>
+    <plurals name="days_with_data">
+        <item quantity="one">%1$d día con datos</item>
+        <item quantity="many">%1$d días con datos</item>
+        <item quantity="other">%1$d días con datos</item>
+    </plurals>
+    <plurals name="serving_identities">
+        <item quantity="one">%1$d identidad servidora completa</item>
+        <item quantity="many">%1$d identidades servidoras completas</item>
+        <item quantity="other">%1$d identidades servidoras completas</item>
+    </plurals>
+    <plurals name="pages_count">
+        <item quantity="one">%1$d página</item>
+        <item quantity="many">%1$d páginas</item>
+        <item quantity="other">%1$d páginas</item>
+    </plurals>
+    <plurals name="imports_count">
+        <item quantity="one">%1$d importación</item>
+        <item quantity="many">%1$d importaciones</item>
+        <item quantity="other">%1$d importaciones</item>
+    </plurals>
+    <plurals name="reports_count">
+        <item quantity="one">%1$d informe</item>
+        <item quantity="many">%1$d informes</item>
+        <item quantity="other">%1$d informes</item>
+    </plurals>
+    <string name="cross_title">Coincidencias y diferencias entre fuentes</string>
+    <string name="cross_note">Casi todas las fuentes proceden de ICdetector: una coincidencia comprueba la coherencia de los archivos, no es una confirmación independiente. Una diferencia no demuestra una anomalía de red. Estos cruces no cambian la valoración.</string>
+    <string name="cross_show_detail">Ver detalle</string>
+    <string name="cross_hide_detail">Ocultar detalle</string>
+    <string name="cross_detail_title">Diferencias y cruces vinculados a episodios</string>
+    <string name="cross_detail_none">No hay diferencias ni cruces vinculados a los episodios.</string>
+    <string name="cross_full_in_annex">El listado completo, resultado por resultado, puede incluirse como anexo opcional del informe técnico.</string>
+    <string name="report_cross_annex">Incluir anexo con el listado completo de cruces</string>
+    <string name="report_cross_annex_note">Desactivado por defecto. Con muchos datos puede añadir cientos de páginas; el resumen del informe conserva los mismos totales.</string>
+    <plurals name="cross_groups">
+        <item quantity="one">%1$d grupo; %2$d resultados de comprobaciones (no incidentes ni evidencias independientes)</item>
+        <item quantity="many">%1$d grupos; %2$d resultados de comprobaciones (no incidentes ni evidencias independientes)</item>
+        <item quantity="other">%1$d grupos; %2$d resultados de comprobaciones (no incidentes ni evidencias independientes)</item>
+    </plurals>
+    <string name="profile_title">Perfil local de ICdetector (en sombra)</string>
+    <string name="profile_note">Experimental y sin calibrar: ICdetector compara la señal con lo habitual en este teléfono. Es contexto y no cambia la valoración.</string>
+    <string name="profile_none">El historial no tiene evaluaciones del perfil local.</string>
+    <string name="profile_mixed">Hay varias versiones del algoritmo: ICdetector advierte que no se comparen entre sí.</string>
+    <plurals name="profile_evaluated">
+        <item quantity="one">%1$s de %2$s filas evaluada</item>
+        <item quantity="many">%1$s de %2$s filas evaluadas</item>
+        <item quantity="other">%1$s de %2$s filas evaluadas</item>
+    </plurals>
+    <plurals name="profile_outside">
+        <item quantity="one">%1$s fila con desviación moderada o alta fuera de los episodios</item>
+        <item quantity="many">%1$s filas con desviación moderada o alta fuera de los episodios</item>
+        <item quantity="other">%1$s filas con desviación moderada o alta fuera de los episodios</item>
+    </plurals>
+    <!-- Nombre de un archivo elegido cuando el sistema no da ninguno. -->
+    <string name="file_unnamed">archivo</string>
+</resources>

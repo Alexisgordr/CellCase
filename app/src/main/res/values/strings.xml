@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Interfaz en inglés: idioma predeterminado (D-045). Mismas claves y marcadores que values-es. -->
+<resources>
+    <string name="app_name" translatable="false">CellCase</string>
+    <string name="cases_title">CellCase · Cases</string>
+    <string name="cases_empty">There are no cases. Create one and import the ICdetector exports with the file picker. Everything is stored only on this phone; the app uses no network and no accounts.</string>
+    <string name="case_title">Case</string>
+    <string name="case_load_failed">The case could not be loaded.</string>
+    <string name="case_declared_device">Declared capture device: %1$s</string>
+    <string name="case_declared_this_suffix">" (declared: this phone)"</string>
+    <string name="case_declared_other_suffix">" (declared: another device)"</string>
+    <string name="case_detected_device">Analysis device detected when the case was created: %1$s · time zone %2$s. It does not prove where the files came from.</string>
+    <string name="case_zone_confirmed">Capture time zone: %1$s — assumption confirmed by the user</string>
+    <string name="case_zone_unconfirmed">Capture time zone: %1$s — assumption NOT CONFIRMED by the user</string>
+    <string name="case_zone_created">Time zone: %1$s · created %2$s</string>
+    <string name="case_origin">Data origin: %1$s</string>
+    <string name="case_origin_short">Origin: %1$s</string>
+    <string name="case_origin_inherited_suffix">" (inherited declaration; please review it)"</string>
+    <string name="case_origin_inherited">This declaration comes from an earlier version («synthetic data» box). Please review it.</string>
+    <string name="case_origin_conflict">Declared real, but there are automatic signs of test data in: %1$s. Please review the declaration.</string>
+    <string name="case_discrepancy">Warning: %1$s</string>
+    <string name="device_not_declared">not declared</string>
+    <string name="device_this_phone">this phone</string>
+    <string name="origin_title">Data origin</string>
+    <string name="origin_undetermined">Not determined (I am not declaring it yet)</string>
+    <string name="origin_real">Real: captures from a real phone. This is my declaration; it does not verify authenticity.</string>
+    <string name="origin_synthetic">Synthetic: generated test data.</string>
+    <string name="origin_mixed">Mixed: real and synthetic data in the same case.</string>
+    <string name="origin_short_real">declared real</string>
+    <string name="origin_short_synthetic">synthetic</string>
+    <string name="origin_short_mixed">mixed</string>
+    <string name="origin_short_undetermined">not determined</string>
+    <string name="action_new_case">New case</string>
+    <string name="action_language">Language</string>
+    <string name="action_open">Open</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_create">Create</string>
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_close">Close</string>
+    <string name="action_close_summary">Close summary</string>
+    <string name="action_back">‹ Back</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_origin">Origin</string>
+    <string name="action_add_files">Add files</string>
+    <string name="action_verify_originals">Check originals</string>
+    <string name="action_save_period">Save period</string>
+    <string name="action_remove">Remove</string>
+    <string name="action_save_notes">Save notes</string>
+    <string name="action_generate_pdf">Generate PDF</string>
+    <string name="action_save_copy">Save copy</string>
+    <string name="language_title">App language</string>
+    <string name="language_system">Follow the system language</string>
+    <string name="language_spanish">Español</string>
+    <string name="language_english">English</string>
+    <string name="language_note">It only changes the texts on screen. Cases, files and saved reports do not change. The language of each report is chosen when it is generated.</string>
+    <string name="form_new_title">New case</string>
+    <string name="form_edit_title">Edit case</string>
+    <string name="form_name">Case name</string>
+    <string name="form_description">Description (optional)</string>
+    <string name="form_detected_title">Analysis device detected</string>
+    <string name="form_not_available">Not available</string>
+    <string name="form_detected_note">This is the phone running CellCase. Detecting it does not prove that the captures come from it.</string>
+    <string name="form_source_title">Where the captures come from (your declaration)</string>
+    <string name="form_source_this">The captures come from this phone</string>
+    <string name="form_source_other">They come from another device</string>
+    <string name="form_source_none">I am not declaring it</string>
+    <string name="form_other_device">Capture device (make and model)</string>
+    <string name="form_zone">Time zone during the capture</string>
+    <string name="form_zone_invalid">Invalid time zone (Region/City format).</string>
+    <string name="form_zone_suggested">Suggested: this phone\'s current time zone (%1$s). The current time zone does not prove the one used during the capture.</string>
+    <string name="form_unknown">unknown</string>
+    <string name="form_zone_confirm">I confirm the capture phone used this time zone. It is saved as a declared assumption.</string>
+    <string name="delete_title">Delete «%1$s»?</string>
+    <string name="delete_intro">This will be deleted from this phone:</string>
+    <string name="delete_case_item">• The case and its notes, period and options.</string>
+    <string name="delete_records_item">• The derived records: analysis, issues and report history.</string>
+    <string name="delete_records_item_counts">• The derived records: analysis, issues and report history (%1$s, %2$s).</string>
+    <string name="delete_copies_item">• The private copies of the imported files and the PDFs saved inside CellCase.</string>
+    <string name="delete_copies_item_size">• The private copies of the imported files and the PDFs saved inside CellCase (%1$s).</string>
+    <string name="delete_not_deleted">The original files you chose with the picker and the PDFs you saved outside CellCase are not deleted.</string>
+    <string name="delete_irreversible">This action cannot be undone.</string>
+    <string name="files_title">Files</string>
+    <string name="files_help">You can select several ICdetector files at once: the exported CSV and ZIP files (History, Radio, Topology, Stable-Site, Geometry and forensic cases, from 2.10.5 or 3.0) or the ICdetector 3.0.0 backup (.icdbackup), which contains all of them. You can add more later. Each file is processed separately; an identical file (same SHA-256) is not counted twice.</string>
+    <string name="batch_title">Import result</string>
+    <string name="batch_already_present">Already present: identical (same SHA-256) to «%1$s». It is not imported or counted again.</string>
+    <string name="batch_failed">%1$s. The other files are not affected.</string>
+    <string name="zip_missing_listed">Listed in SHA256SUMS but missing: %1$s</string>
+    <string name="zip_unlisted">Not listed in SHA256SUMS: %1$s</string>
+    <string name="issues_loading">Loading issues…</string>
+    <string name="issues_none">No validation issues.</string>
+    <string name="issues_examples">Examples: %1$s</string>
+    <string name="import_tap_hint">Tap to see the content and the issues.</string>
+    <string name="severity_error">Error</string>
+    <string name="severity_warning">Warning</string>
+    <string name="severity_info">Information</string>
+    <string name="duplicates_title">Duplicate review</string>
+    <string name="duplicates_note">Check whether they are overlapping exports from the same phone. CellCase does not delete any file.</string>
+    <string name="episodes_title">Incidents</string>
+    <string name="episodes_none">There are no incidents: there are no ICdetector signals, forensic cases or Stable-Site episodes with an exact time.</string>
+    <string name="episodes_status">Status: %1$s</string>
+    <string name="episodes_counts">Priority review: %1$d · to review: %2$d · context: %3$d.</string>
+    <string name="episodes_priority_note">The priority follows explicit criteria (ICdetector alarm, behaviour confirmed in the measurements, recurrence or persistence, data quality); it is neither a probability nor an attribution.</string>
+    <string name="episode_line">E%1$d · %2$s · technical interest: %3$s · %4$s</string>
+    <string name="episode_subthreshold">sub-threshold only</string>
+    <string name="history_title">History: period and quality</string>
+    <string name="history_none">No history has been imported. The other formats are analysed anyway.</string>
+    <string name="history_period">From %1$s to %2$s (phone\'s local time)</string>
+    <string name="history_times">Unique UTC instant: %1$s · ambiguous: %2$d · non-existent: %3$d</string>
+    <string name="history_valid">Valid — GNSS %1$s · TA %2$s · RSRQ %3$s · SINR %4$s · service state %5$s</string>
+    <string name="history_sentinels">Sentinels treated as missing: %1$s · rows discarded because of their structure: %2$d</string>
+    <string name="history_gaps">Intervals with no records of 60 min or more: %1$d</string>
+    <string name="history_gaps_not_evaluable">Intervals with no records: not assessable without a confirmed time zone.</string>
+    <string name="history_collector">ICdetector results (quoted, not recalculated). Rows with a reason: %1$d · sub-threshold: %2$d.</string>
+    <string name="history_in_period">Within the period of interest: %1$s rows; without a unique instant: %2$d</string>
+    <string name="period_title">Period of interest (optional)</string>
+    <string name="period_help">Local times in the declared time zone (%1$s).</string>
+    <string name="period_label">Description</string>
+    <string name="period_start">Start %1$s</string>
+    <string name="period_end">End %1$s</string>
+    <string name="period_default_label">Period of interest</string>
+    <string name="period_bad_format">Invalid date format: «%1$s».</string>
+    <string name="period_ambiguous">«%1$s» is ambiguous because of the daylight saving change; choose another time.</string>
+    <string name="period_nonexistent">«%1$s» does not exist in the declared time zone (daylight saving change).</string>
+    <string name="period_confirm_zone">Confirm the case time zone.</string>
+    <string name="period_end_before_start">The end is before the start.</string>
+    <string name="notes_title">Analyst\'s notes</string>
+    <string name="notes_help">They appear in the report in their own section, separate from the automatic text, and are never translated.</string>
+    <string name="report_title">PDF report</string>
+    <string name="report_mode">Type</string>
+    <string name="report_mode_explained">Plain-language (recommended): for people without technical knowledge; it answers what the data allow us to conclude and what to do.</string>
+    <string name="report_mode_full">Full technical: incidents, measurements, methodology, sources, quality, references, hashes and rules.</string>
+    <string name="report_same_analysis">Both use the same analysis and reach the same conclusion about possible fake base stations.</string>
+    <string name="report_language">Report language</string>
+    <string name="report_language_note">Independent of the app language. It only changes the presentation: the findings, priorities and conclusions are the same.</string>
+    <string name="report_coordinates">Coordinates in the report</string>
+    <string name="coords_omit">Omit</string>
+    <string name="coords_round2">Round (~1 km)</string>
+    <string name="coords_round3">Round (~100 m)</string>
+    <string name="coords_full">Full</string>
+    <string name="report_mask_ids">Mask TAC and CID</string>
+    <string name="report_rounding_note">Rounding is only visual: the originals keep full precision.</string>
+    <string name="report_outdated">Generated with an earlier configuration: %1$s. It does not reflect the current analysis.</string>
+    <string name="mode_explained">Plain-language</string>
+    <string name="mode_full">Full technical</string>
+    <string name="mode_summary_old">Summary (earlier version)</string>
+    <string name="import_counts">%1$s, %2$s, %3$s</string>
+    <string name="notice_import_done">Selection processed: %1$s. Details in «Import result».</string>
+    <string name="notice_import_cancelled">Import cancelled. Completed and kept: %1$s (%2$s). Pending: %3$s. The file in progress has not been saved; you can add it again.</string>
+    <string name="notice_originals_bad">They do not match: %1$s</string>
+    <string name="notice_reanalysed">Analysis recalculated. Earlier reports are kept and marked as generated with an earlier configuration.</string>
+    <string name="notice_report_cancelled">Generation cancelled: no report has been saved.</string>
+    <string name="notice_exported">Copy saved.</string>
+    <string name="notice_cancelled">Operation cancelled.</string>
+    <string name="notice_busy">An operation is already in progress.</string>
+    <string name="notice_error">Error: %1$s</string>
+    <string name="notice_create_failed">The case could not be created: %1$s</string>
+    <string name="notice_case_deleted">Case deleted.</string>
+    <string name="notice_delete_failed">It could not be deleted: %1$s</string>
+    <string name="busy_loading">Loading and analysing the case</string>
+    <string name="busy_reanalysing">Recalculating the joint analysis…</string>
+    <string name="busy_verifying">Checking the copies of the originals</string>
+    <string name="busy_deleting">Deleting the case</string>
+    <string name="busy_report_explained">Generating the plain-language report</string>
+    <string name="busy_report_full">Generating the full technical report</string>
+    <string name="busy_layout">Laying out pages…</string>
+    <string name="busy_exporting">Saving a copy of the report</string>
+    <string name="busy_reading">Reading %1$d/%2$d: %3$s</string>
+    <string name="busy_analysing">Analysing episodes…</string>
+    <string name="error_case_missing">The case does not exist.</string>
+    <string name="error_open_file">The file could not be opened.</string>
+    <string name="error_open_target">The destination could not be opened.</string>
+    <string name="error_delete_move">The case\'s private folder could not be moved; nothing has been deleted.</string>
+    <plurals name="history_combined">
+        <item quantity="one">%1$d history is combined.</item>
+        <item quantity="other">%1$d histories are combined.</item>
+    </plurals>
+    <plurals name="duplicates_forensic">
+        <item quantity="one">Forensic case %2$s: %1$d exported version (%3$s). It is kept; details in the technical report.</item>
+        <item quantity="other">Forensic case %2$s: %1$d exported versions (%3$s). All are kept; details in the technical report.</item>
+    </plurals>
+    <plurals name="busy_importing">
+        <item quantity="one">Importing %1$d file</item>
+        <item quantity="other">Importing %1$d files</item>
+    </plurals>
+    <plurals name="files_count">
+        <item quantity="one">%1$d file</item>
+        <item quantity="other">%1$d files</item>
+    </plurals>
+    <plurals name="files_imported">
+        <item quantity="one">%1$d imported</item>
+        <item quantity="other">%1$d imported</item>
+    </plurals>
+    <plurals name="files_not_imported">
+        <item quantity="one">%1$d not imported</item>
+        <item quantity="other">%1$d not imported</item>
+    </plurals>
+    <plurals name="files_already_present">
+        <item quantity="one">%1$d already present</item>
+        <item quantity="other">%1$d already present</item>
+    </plurals>
+    <plurals name="notice_originals_ok">
+        <item quantity="one">The %1$d stored copy matches the SHA-256 recorded on import. This only shows that it has not changed since then.</item>
+        <item quantity="other">The %1$d stored copies match the SHA-256 recorded on import. This only shows that they have not changed since then.</item>
+    </plurals>
+    <plurals name="notice_report_done">
+        <item quantity="one">Report generated: %1$d page. Use «Save copy» to export it.</item>
+        <item quantity="other">Report generated: %1$d pages. Use «Save copy» to export it.</item>
+    </plurals>
+    <plurals name="case_indicator_files">
+        <item quantity="one">Automatic signs of test data in %1$d file. These signs do not decide the origin.</item>
+        <item quantity="other">Automatic signs of test data in %1$d files. These signs do not decide the origin.</item>
+    </plurals>
+    <plurals name="zip_entries">
+        <item quantity="one">ZIP content (%1$d entry)</item>
+        <item quantity="other">ZIP content (%1$d entries)</item>
+    </plurals>
+    <plurals name="rows_count">
+        <item quantity="one">%1$s row</item>
+        <item quantity="other">%1$s rows</item>
+    </plurals>
+    <plurals name="duplicates_rows">
+        <item quantity="one">%1$s history row appears in more than one file with the same immutable columns. It is counted once in the analysis; the files are kept.</item>
+        <item quantity="other">%1$s history rows appear in more than one file with the same immutable columns. They are counted once in the analysis; the files are kept.</item>
+    </plurals>
+    <plurals name="duplicates_revised">
+        <item quantity="one">%1$s differs in verification or coordinates (possible later revision by ICdetector); both values are kept.</item>
+        <item quantity="other">%1$s differ in verification or coordinates (possible later revision by ICdetector); both values are kept.</item>
+    </plurals>
+    <plurals name="duplicates_radio">
+        <item quantity="one">%1$s identical Radio event in several exports is counted once.</item>
+        <item quantity="other">%1$s identical Radio events in several exports are counted once.</item>
+    </plurals>
+    <plurals name="episodes_only_context">
+        <item quantity="one">No incident merits review; %1$d context observation.</item>
+        <item quantity="other">No incident merits review; %1$d context observations.</item>
+    </plurals>
+    <plurals name="observations_count">
+        <item quantity="one">%1$d observation</item>
+        <item quantity="other">%1$d observations</item>
+    </plurals>
+    <plurals name="recurs_on_days">
+        <item quantity="one">recurs on %1$d day</item>
+        <item quantity="other">recurs on %1$d days</item>
+    </plurals>
+    <plurals name="analyses_missing">
+        <item quantity="one">Analyses not available: %1$d (details in the full technical report).</item>
+        <item quantity="other">Analyses not available: %1$d (details in the full technical report).</item>
+    </plurals>
+    <plurals name="days_with_data">
+        <item quantity="one">%1$d day with data</item>
+        <item quantity="other">%1$d days with data</item>
+    </plurals>
+    <plurals name="serving_identities">
+        <item quantity="one">%1$d complete serving identity</item>
+        <item quantity="other">%1$d complete serving identities</item>
+    </plurals>
+    <plurals name="pages_count">
+        <item quantity="one">%1$d page</item>
+        <item quantity="other">%1$d pages</item>
+    </plurals>
+    <plurals name="imports_count">
+        <item quantity="one">%1$d import</item>
+        <item quantity="other">%1$d imports</item>
+    </plurals>
+    <plurals name="reports_count">
+        <item quantity="one">%1$d report</item>
+        <item quantity="other">%1$d reports</item>
+    </plurals>
+    <string name="cross_title">Agreements and differences between sources</string>
+    <string name="cross_note">Most sources come from ICdetector: an agreement checks that the files are consistent, it is not independent confirmation. A difference does not prove a network anomaly. These checks do not change the assessment.</string>
+    <string name="cross_show_detail">Show details</string>
+    <string name="cross_hide_detail">Hide details</string>
+    <string name="cross_detail_title">Differences and cross-checks linked to episodes</string>
+    <string name="cross_detail_none">There are no differences or cross-checks linked to the episodes.</string>
+    <string name="cross_full_in_annex">The full list, result by result, can be included as an optional annex of the technical report.</string>
+    <string name="report_cross_annex">Include annex with the full list of cross-checks</string>
+    <string name="report_cross_annex_note">Off by default. With large datasets it can add hundreds of pages; the report summary keeps the same totals.</string>
+    <plurals name="cross_groups">
+        <item quantity="one">%1$d group; %2$d check results (not incidents or independent evidence)</item>
+        <item quantity="other">%1$d groups; %2$d check results (not incidents or independent evidence)</item>
+    </plurals>
+    <string name="profile_title">ICdetector local profile (shadow mode)</string>
+    <string name="profile_note">Experimental and not calibrated: ICdetector compares the signal with what is usual on this phone. It is context and does not change the assessment.</string>
+    <string name="profile_none">The history has no local profile evaluations.</string>
+    <string name="profile_mixed">There are several algorithm versions: ICdetector warns not to compare them with each other.</string>
+    <plurals name="profile_evaluated">
+        <item quantity="one">%1$s of %2$s rows evaluated</item>
+        <item quantity="other">%1$s of %2$s rows evaluated</item>
+    </plurals>
+    <plurals name="profile_outside">
+        <item quantity="one">%1$s row with moderate or high deviation outside the episodes</item>
+        <item quantity="other">%1$s rows with moderate or high deviation outside the episodes</item>
+    </plurals>
+    <!-- Nombre de un archivo elegido cuando el sistema no da ninguno. -->
+    <string name="file_unnamed">file</string>
+</resources>
