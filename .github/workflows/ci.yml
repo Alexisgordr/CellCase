@@ -33,12 +33,13 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "21"
-      - uses: gradle/actions/setup-gradle@v4
+      # setup-gradle se queda en v5 (MIT, Node 24): la v6 activa por defecto una caché propietaria de Gradle.
+      - uses: gradle/actions/setup-gradle@v5
       # El SDK de Android ya viene en la imagen ubuntu-24.04 (ANDROID_HOME); Gradle descarga la plataforma y las
       # build-tools que falten con las licencias ya aceptadas en el ejecutor. android-actions/setup-android falla en
       # las imágenes recientes y no hace falta.
@@ -53,7 +54,7 @@ jobs:
         run: ./gradlew --stacktrace :core:sampleReport
       - name: Resultados de las pruebas
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: informes-de-pruebas
           path: |
@@ -68,12 +69,12 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "21"
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v5
       # El SDK de Android ya viene en la imagen ubuntu-24.04 (ANDROID_HOME); Gradle descarga la plataforma y las
       # build-tools que falten con las licencias ya aceptadas en el ejecutor. android-actions/setup-android falla en
       # las imágenes recientes y no hace falta.
@@ -90,7 +91,7 @@ jobs:
           python3 tools/apk_size.py app/build/outputs/apk/release/*.apk || true
       - name: APK y lint
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: apk-y-lint
           path: |
@@ -103,8 +104,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Catálogos de textos es/en (mismas claves, marcadores y plurales)
@@ -115,13 +116,13 @@ jobs:
           git status --porcelain samples/synthetic/icd30
           test -z "$(git status --porcelain samples/synthetic/icd30)"
       - name: Código de ICdetector v2.10.5
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: alexisgordr/ICdetector
           ref: v2.10.5
           path: icdetector-2.10.5
       - name: Código de ICdetector v3.0.0
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: alexisgordr/ICdetector
           ref: v3.0.0
@@ -136,12 +137,12 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "21"
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v5
       # El SDK de Android ya viene en la imagen ubuntu-24.04 (ANDROID_HOME); Gradle descarga la plataforma y las
       # build-tools que falten con las licencias ya aceptadas en el ejecutor. android-actions/setup-android falla en
       # las imágenes recientes y no hace falta.
@@ -165,7 +166,7 @@ jobs:
           script: ./gradlew --stacktrace :app:connectedDebugAndroidTest
       - name: Resultados del emulador
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pruebas-instrumentadas
           path: app/build/reports/androidTests/
