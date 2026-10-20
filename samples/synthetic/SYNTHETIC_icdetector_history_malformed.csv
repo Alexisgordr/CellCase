@@ -1,0 +1,4 @@
+Timestamp,NetType,CID,MNC,TAC,MCC,DBM,Verified,SecurityScore,FailedHeuristics,Lat,Lon,PCI,ARFCN,RSRQ,SINR,AnomalyConfidence,ApiLat,ApiLon,TA,TAUnit,TAMeters,Radio,ServingConnection,BandwidthKHz,Bands,AdditionalPlmns,CsgIndicator,CsgIdentity,CsgName,SecondaryCarriers,ServiceState,NetworkOperator,SimOperator,NetworkRoaming
+2026-09-26 10:00:00,4G,1000001,01,1001,001,-88
+fecha-no-valida,4G,1000001,01,1001,001,abc,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x
+"comillas sin cerrar,4G

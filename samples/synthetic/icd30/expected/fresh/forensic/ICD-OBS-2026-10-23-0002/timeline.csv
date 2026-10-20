@@ -1,0 +1,3 @@
+timestamp_utc,elapsed_ms,event,phase,score,anomaly_confidence,cell_identity,verified,latency_state,gps_lat,gps_lon,gps_accuracy_m,reason,required_phases,data_quality_reason,heuristics
+"2026-10-23T11:53:44Z","1000000","OPEN","1","90","7.5","001-01-3003-1000953-LTE","NOT_FOUND","NORMAL","0.0101","0.0202","8.5","[sub-umbral] Potencia anómala vs historial (+19dB)","3","","H1=PASSED;H3=FAILED;H9=NOT_EVALUATED(sin datos)"
+"2026-10-23T11:54:14Z","1030000","SAMPLE","2","85","8.5","001-01-3003-1000953-LTE","NOT_FOUND","NORMAL","0.0101","0.0202","8.5","[sub-umbral] Potencia anómala vs historial (+19dB)","3","H8: sin RSRQ en 2 de 5 lecturas","H1=PASSED;H3=FAILED;H9=NOT_EVALUATED(sin datos)"

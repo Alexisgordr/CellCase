@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns">
+  <key id="identity" for="node" attr.name="identity" attr.type="string"/>
+  <key id="radio_tech" for="node" attr.name="radio_tech" attr.type="string"/>
+  <key id="local_trust_state" for="node" attr.name="local_trust_state" attr.type="string"/>
+  <key id="mobility_familiarity" for="node" attr.name="mobility_familiarity" attr.type="string"/>
+  <key id="mobility_good_edges" for="node" attr.name="mobility_good_edges" attr.type="string"/>
+  <key id="mobility_relevant_trip_count" for="node" attr.name="mobility_relevant_trip_count" attr.type="string"/>
+  <key id="transition_count" for="edge" attr.name="transition_count" attr.type="int"/>
+  <key id="trusted_transition_count" for="edge" attr.name="trusted_transition_count" attr.type="int"/>
+  <key id="trip_count" for="edge" attr.name="trip_count" attr.type="int"/>
+  <graph id="ICdetectionGeometry" edgedefault="directed">
+  </graph>
+</graphml>

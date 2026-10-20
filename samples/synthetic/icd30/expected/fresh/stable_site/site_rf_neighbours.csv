@@ -1,0 +1,3 @@
+site_key,rf_fingerprint,evidence_type,radio,arfcn,pci,mcc_metadata,mnc_metadata,tac_metadata,observations,distinct_days,first_seen_ms,last_seen_ms
+0f1e2d3c4b5a69788796,LTE:1300:102,RF_CONTEXT,LTE,1300,102,001,01,,8,3,1792368000000,1792800000000
+a1b2c3d4e5f60718293a,LTE:1300:101,RF_CONTEXT,LTE,1300,101,001,01,,9,4,1792368000000,1792800000000

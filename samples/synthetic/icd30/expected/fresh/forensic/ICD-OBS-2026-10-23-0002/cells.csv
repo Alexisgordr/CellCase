@@ -1,0 +1,6 @@
+timestamp_utc,role,identity,mcc,mnc,tac,cid,radio,network_type,dbm,pci,arfcn,band,rsrq,sinr,ta,ta_unit,connection_state,bandwidth_khz,registered,bands,csg_indicator,secondary_carriers
+"2026-10-23T11:53:44Z","SERVING","001-01-3003-1000953-LTE","001","01","3003","1000953","LTE","LTE","-108","101","1300","3","-11","12","3","LTE_INDEX","PRIMARY_SERVING","20000","true","3","","NR:632628:301"
+"2026-10-23T11:53:44Z","NEIGHBOR","001-01-3001-1000071-LTE","001","01","3001","1000071","LTE","LTE","-104","71","1300","3","-14","","","UNKNOWN","NONE","","false","3","",""
+"2026-10-23T11:53:44Z","SECONDARY","N/A-N/A-N/A-N/A-NR","N/A","N/A","N/A","N/A","NR","NR","-95","301","632628","","-12","","","UNKNOWN","SECONDARY_SERVING","","false","","",""
+"2026-10-23T11:54:14Z","SERVING","001-01-3003-1000953-LTE","001","01","3003","1000953","LTE","LTE","-108","101","1300","3","-11","12","3","LTE_INDEX","PRIMARY_SERVING","20000","true","3","",""
+"2026-10-23T11:54:14Z","NEIGHBOR","001-01-3001-1000071-LTE","001","01","3001","1000071","LTE","LTE","-104","71","1300","3","-14","","","UNKNOWN","NONE","","false","3","",""

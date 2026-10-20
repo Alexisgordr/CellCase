@@ -1,0 +1,126 @@
+{
+  "synthetic": true,
+  "warning": "Datos inventados para pruebas. No proceden de ningún dispositivo ni red reales.",
+  "generator": "tools/synth/generate_samples.py",
+  "assumedDeviceTimeZone": "Europe/Madrid",
+  "plmn": "001-01 (red de pruebas)",
+  "scenario": "Tres días (26-28/09/2026, hora de Madrid). Domicilio en celda A, trabajo en C, trayectos por B. El 27/09 a las 21:14 locales (19:14 UTC) la servidora pasa durante 2,5 min a X (TAC 1099, potencia alta, TA=0), con alarma confirmada del colector, breve OUT_OF_SERVICE al volver, caso forense ICD-2026-09-27-0007 y episodio de Stable-Site.",
+  "files": {
+    "SYNTHETIC_icdetector_history.csv": {
+      "kind": "history",
+      "sha256": "9e0e910f7f29433d6fb15857ff612560bced486aa37ab82d9472407029d6f265",
+      "bytes": 127028,
+      "note": "Historial v2.10.4+ (35 columnas).",
+      "rows": 651
+    },
+    "SYNTHETIC_icdetector_history_edge_cases.csv": {
+      "kind": "history",
+      "sha256": "633b03f41139b6a8db9755def250a454979067a10bab33e7a2b26b956dd09d98",
+      "bytes": 1148,
+      "note": "Casos límite: comillas, comas, salto de línea, centinela 2147483647, notación científica, NR_RAW, STUB_ZERO, Radio UNKNOWN, hora ambigua del 25/10/2026 02:30."
+    },
+    "SYNTHETIC_icdetector_history_v21_23cols.csv": {
+      "kind": "history",
+      "sha256": "b631b8ff7ed8059a8b6ccc87bef5d6a88d2d4aaeb71bcca7fa35ee3f52791014",
+      "bytes": 520,
+      "note": "Historial con las 23 columnas de v2.1-v2.10.3."
+    },
+    "SYNTHETIC_icdetector_history_malformed.csv": {
+      "kind": "history-invalid",
+      "sha256": "68c0ed121aab5d6e2c005a51771629216f9744133e32ddc480db60c1d3960aea",
+      "bytes": 493,
+      "note": "Filas con columnas de menos, tipos incorrectos y comillas sin cerrar."
+    },
+    "SYNTHETIC_icdetector_service_state.csv": {
+      "kind": "radio",
+      "sha256": "c1efcfa1e1981a5a3423bf892cff9925383cd7a0c90c5fe95ee14535c2086967",
+      "bytes": 899,
+      "note": "Eventos de estado de servicio.",
+      "rows": 7
+    },
+    "SYNTHETIC_icdetector_service_state_empty.csv": {
+      "kind": "radio",
+      "sha256": "cb2c0a0aa4a07f4f94404759fad63e1d1143ee0331c7ad273da2e29a6cf8fd83",
+      "bytes": 188,
+      "note": "Solo cabecera: puede significar fallo de lectura en origen (export-formats.md §2.2).",
+      "rows": 0
+    },
+    "SYNTHETIC_ICD-2026-09-27-0007.zip": {
+      "kind": "forensic-case",
+      "sha256": "426b32334b88745178f260ff348f9d89d1f1bb4256e4a1e2287937505ce69d5b",
+      "bytes": 8657,
+      "note": "Caso READY de origen ALARM.",
+      "samples": 54,
+      "entrySha256": {
+        "case.json": "f303272dfdedbc53a7d08e9139a52cae3db259ed5549a170dab133f5f854e3e6",
+        "timeline.csv": "59df54a41a205733d8ec82f00e02933987d17bbd502302cfddf916aab5b5f82b",
+        "cells.csv": "d6e82d64255e80a58cbbbbaf08901cfb677b66cec067206f1103618b9ec2f4cf",
+        "heuristics.csv": "043e187ca023ce0dc49cb8d4269a454382f3d34fff047075b9bcdec92a5584a0",
+        "capabilities.json": "7266476770d388d3771ecab535ec7f648b00af0f4a696fe683a1c9961d2c03fc",
+        "terminal.log": "3c0d45f8f416572b60019ff87463dfbf2291655d71e2168484c007eae430619e",
+        "SHA256SUMS.txt": "007085ebd0dab2a4cf9209c0d667c288f5ca1027e4d795ca1e882ad86a92144e"
+      }
+    },
+    "SYNTHETIC_ICD-2026-09-27-0007_reexport.zip": {
+      "kind": "forensic-case",
+      "sha256": "ea41b136fd743e513d969b1f8adc5bcfc9ce9ee3d38bc85d70bbc58efde289b3",
+      "bytes": 8657,
+      "note": "Mismo caso exportado otra vez: ZIP con bytes distintos, entradas idénticas (duplicado exacto por contenido)."
+    },
+    "SYNTHETIC_ICD-2026-09-27-0007_tampered.zip": {
+      "kind": "forensic-case",
+      "sha256": "7d12da221bffc3b7daf2f8aefa02848db215ecb74dc766926846c16a87f6c110",
+      "bytes": 8663,
+      "note": "timeline.csv modificado después de exportar: su SHA-256 ya no coincide con SHA256SUMS.txt."
+    },
+    "SYNTHETIC_ICD-topology.zip": {
+      "kind": "topology",
+      "sha256": "f2bcdd7236d1273f513e253d74812f694f88b8290d355681a8500c172dd9e7c5",
+      "bytes": 2034,
+      "note": "Agregado de 8 rutas exportado el 28/09.",
+      "entrySha256": {
+        "cells.csv": "83aced42e7a67fd67fa730b55951d98f2b5e80fc2a707c747bb25ca2ea132010",
+        "transitions.csv": "00d45f460ae9bba51a12661d9d47ca6956c79c9dc8e412b6b430635b0ce66d6d",
+        "topology.graphml": "2060394595bb68f2a0784d4e96eea001db0dd441fa348194e823df491f7a223a",
+        "metadata.json": "210ea2d5b6f400e3909a65360e6c03012e28a700aaf5a3ac927e6984e8a68751",
+        "SHA256SUMS.txt": "36aea6fefdc4efd2a288a450ebacbce5daf009ab2dd1b31a354ee880d938841f"
+      }
+    },
+    "SYNTHETIC_ICD-geometry.zip": {
+      "kind": "geometry",
+      "sha256": "4398c10250a06febb5142920fedf367065a8ffaa8dabd9621b6049b30a1b6455",
+      "bytes": 2566,
+      "note": "Exportado el 29/09, después de la topología: A->B tiene un handover más. Incluye un viaje abierto y uno descartado (CLOSED con had_moving=false)."
+    },
+    "SYNTHETIC_ICD-stable-site.zip": {
+      "kind": "stable-site",
+      "sha256": "bb7717eecbb6d5260f303a611b27e9a58f5a2dc10e19ae9f3ee0943726bf8001",
+      "bytes": 2193,
+      "note": "Claves de sitio aleatorias (no derivadas de coordenadas). Cada lugar aparece con 4 claves, como en origen."
+    },
+    "SYNTHETIC_hostile_path_traversal.zip": {
+      "kind": "hostile",
+      "sha256": "ca50f8dbd429047a6f81d3d27c5c2d1d736df8f0b85c121cbf9e3f3eca758966",
+      "bytes": 371,
+      "note": "Archivo malicioso o dañado para pruebas de seguridad del importador."
+    },
+    "SYNTHETIC_hostile_zip_bomb_64MiB.zip": {
+      "kind": "hostile",
+      "sha256": "ed7dc82473e2e553bbf4dd19b95bd47b8754b6d27f7d77f98b356878dc47bbe6",
+      "bytes": 65355,
+      "note": "Archivo malicioso o dañado para pruebas de seguridad del importador."
+    },
+    "SYNTHETIC_hostile_many_entries.zip": {
+      "kind": "hostile",
+      "sha256": "458d132ca80493bb80b44b674805c9e1de1b8efdc1e0f22fcf4951977030d44b",
+      "bytes": 472802,
+      "note": "Archivo malicioso o dañado para pruebas de seguridad del importador."
+    },
+    "SYNTHETIC_hostile_truncated.zip": {
+      "kind": "hostile",
+      "sha256": "6652d85402c517f44dfa3708aecb2eef0fc5a88855b8f37e026bc8e3b151aefc",
+      "bytes": 200,
+      "note": "Archivo malicioso o dañado para pruebas de seguridad del importador."
+    }
+  }
+}

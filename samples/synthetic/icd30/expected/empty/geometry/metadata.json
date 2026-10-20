@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 17,
+  "appVersion": "3.0.0+f5173a8",
+  "appVersionCode": 39,
+  "exportTimeUtc": "2026-10-26T11:30:05.250Z",
+  "feature": "MOBILITY_FAMILIARITY",
+  "featureMode": "CONTEXT_ONLY",
+  "K_PRIOR_TRIPS": 3,
+  "R_GOOD_EDGES": 2,
+  "MIN_DISTINCT_CELLS": 3,
+  "STATIC_CLOSE_DURATION_MS": 180000,
+  "SAME_SERVING_CLOSE_DURATION_MS": 600000,
+  "MAX_TRIP_DURATION_MS": 21600000,
+  "semanticNote": "Mobility Familiarity is contextual route memory. KNOWN_ON_ROUTE does not mean trusted, verified or legitimate.",
+  "privacyNote": "This export can reveal cell identities and patterns associated with frequently visited places or routes. Review it before sharing publicly.",
+  "coordinatesIncluded": false,
+  "localTrustStateAvailability": "Unavailable in schema 17; left empty rather than inferred.",
+  "openTripContributionIncludedInFamiliarity": false
+}

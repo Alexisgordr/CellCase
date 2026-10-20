@@ -1,0 +1,5 @@
+timestamp_utc,heuristic_id,name,status,explanation
+"2026-10-23T11:53:44Z","3","Potencia","FAILED","'+19 dB sobre la referencia, ""sin"" contexto"
+"2026-10-23T11:53:44Z","9","Latencia","NOT_EVALUATED","Sin datos móviles"
+"2026-10-23T11:54:14Z","3","Potencia","FAILED","'+19 dB sobre la referencia, ""sin"" contexto"
+"2026-10-23T11:54:14Z","9","Latencia","NOT_EVALUATED","Sin datos móviles"

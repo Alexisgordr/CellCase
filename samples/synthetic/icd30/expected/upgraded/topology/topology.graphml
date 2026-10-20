@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns">
+  <key id="identity" for="node" attr.name="identity" attr.type="string"/>
+  <key id="observations" for="edge" attr.name="observations" attr.type="int"/>
+  <key id="trusted" for="edge" attr.name="trusted_observations" attr.type="int"/>
+  <key id="status" for="edge" attr.name="last_status" attr.type="string"/>
+  <key id="last_seen" for="edge" attr.name="last_seen_utc" attr.type="string"/>
+  <graph id="ICdetectionTopology" edgedefault="directed">
+    <node id="n0"><data key="identity">001-01-3001-1000069-LTE</data></node>
+    <node id="n1"><data key="identity">001-01-3001-1000070-LTE</data></node>
+    <node id="n2"><data key="identity">001-01-3001-1000071-LTE</data></node>
+    <node id="n3"><data key="identity">001-01-3001-1000980-LTE</data></node>
+    <node id="n4"><data key="identity">001-01-3002-1000542-LTE</data></node>
+    <node id="n5"><data key="identity">001-01-3002-1000543-LTE</data></node>
+    <node id="n6"><data key="identity">001-01-3002-1000544-LTE</data></node>
+    <node id="n7"><data key="identity">001-01-3002-1000545-LTE</data></node>
+    <node id="n8"><data key="identity">001-01-3003-1000953-LTE</data></node>
+    <edge id="e0" source="n6" target="n1">
+      <data key="observations">9</data>
+      <data key="trusted">4</data>
+      <data key="status">PASSED</data>
+      <data key="last_seen">2026-10-26T10:40:17.221Z</data>
+    </edge>
+    <edge id="e1" source="n1" target="n6">
+      <data key="observations">14</data>
+      <data key="trusted">7</data>
+      <data key="status">FAILED</data>
+      <data key="last_seen">2026-10-26T10:20:00.176Z</data>
+    </edge>
+    <edge id="e2" source="n2" target="n1">
+      <data key="observations">15</data>
+      <data key="trusted">10</data>
+      <data key="status">PASSED</data>
+      <data key="last_seen">2026-10-26T09:59:59.969Z</data>
+    </edge>
+    <edge id="e3" source="n3" target="n2">
+      <data key="observations">5</data>
+      <data key="trusted">3</data>
+      <data key="status">NOT_EVALUATED</data>
+      <data key="last_seen">2026-10-26T09:49:55.995Z</data>
+    </edge>
+    <edge id="e4" source="n3" target="n1">
+      <data key="observations">19</data>
+      <data key="trusted">11</data>
+      <data key="status">FAILED</data>
+      <data key="last_seen">2026-10-26T09:19:25.878Z</data>
+    </edge>
+    <edge id="e5" source="n2" target="n6">
+      <data key="observations">6</data>
+      <data key="trusted">3</data>
+      <data key="status">FAILED</data>
+      <data key="last_seen">2026-10-26T08:13:37.087Z</data>
+    </edge>
+    <edge id="e6" source="n1" target="n2">
+      <data key="observations">20</data>
+      <data key="trusted">9</data>
+      <data key="status">PASSED</data>
+      <data key="last_seen">2026-10-26T08:13:37.087Z</data>
+    </edge>
+    <edge id="e7" source="n0" target="n1">
+      <data key="observations">16</data>
+      <data key="trusted">10</data>
+      <data key="status">FAILED</data>
+      <data key="last_seen">2026-10-25T20:04:23.539Z</data>
+    </edge>
+    <edge id="e8" source="n2" target="n0">
+      <data key="observations">4</data>
+      <data key="trusted">4</data>
+      <data key="status">PASSED</data>
+      <data key="last_seen">2026-10-25T19:44:17.344Z</data>
+    </edge>
+    <edge id="e9" source="n6" target="n3">
+      <data key="observations">7</data>
+      <data key="trusted">6</data>
+      <data key="status">PASSED</data>
+      <data key="last_seen">2026-10-25T18:43:33.819Z</data>
+    </edge>
+    <edge id="e10" source="n4" target="n2">
+      <data key="observations">4</data>
+      <data key="trusted">3</data>
+      <data key="status">PASSED</data>
+      <data key="last_seen">2026-10-25T17:27:27.825Z</data>
+    </edge>
+    <edge id="e11" source="n2" target="n4">
+      <data key="observations">3</data>
+      <data key="trusted">1</data>
+      <data key="status">NOT_EVALUATED</data>
+      <data key="last_seen">2026-10-25T16:56:53.434Z</data>
+    </edge>
+    <edge id="e12" source="n6" target="n2">
+      <data key="observations">2</data>
+      <data key="trusted">2</data>
+      <data key="status">PASSED</data>
+      <data key="last_seen">2026-10-25T15:40:41.590Z</data>
+    </edge>
+    <edge id="e13" source="n4" target="n6">
+      <data key="observations">3</data>
+      <data key="trusted">2</data>
+      <data key="status">PASSED</data>
+      <data key="last_seen">2026-10-25T15:20:00.535Z</data>
+    </edge>
+    <edge id="e14" source="n3" target="n4">
+      <data key="observations">5</data>
+      <data key="trusted">2</data>
+      <data key="status">NOT_EVALUATED</data>
+      <data key="last_seen">2026-10-25T15:04:51.748Z</data>
+    </edge>
+    <edge id="e15" source="n0" target="n3">
+      <data key="observations">5</data>
+      <data key="trusted">4</data>
+      <data key="status">PASSED</data>
+      <data key="last_seen">2026-10-25T14:49:33.438Z</data>
+    </edge>
+    <edge id="e16" source="n1" target="n0">
+      <data key="observations">10</data>
+      <data key="trusted">8</data>
+      <data key="status">FAILED</data>
+      <data key="last_seen">2026-10-25T14:19:17.617Z</data>
+    </edge>
+    <edge id="e17" source="n2" target="n3">
+      <data key="observations">4</data>
+      <data key="trusted">2</data>
+      <data key="status">FAILED</data>
+      <data key="last_seen">2026-10-25T12:24:40.502Z</data>
+    </edge>
+    <edge id="e18" source="n4" target="n0">
+      <data key="observations">4</data>
+      <data key="trusted">3</data>
+      <data key="status">PASSED</data>
+      <data key="last_seen">2026-10-25T11:47:45.975Z</data>
+    </edge>
+    <edge id="e19" source="n1" target="n4">
+      <data key="observations">14</data>
+      <data key="trusted">7</data>
+      <data key="status">PASSED</data>
+      <data key="last_seen">2026-10-25T11:17:09.623Z</data>
+    </edge>
+    <edge id="e20" source="n0" target="n2">
+      <data key="observations">1</data>
+      <data key="trusted">0</data>
+      <data key="status">FAILED</data>
+      <data key="last_seen">2026-10-25T08:53:57.118Z</data>
+    </edge>
+    <edge id="e21" source="n4" target="n1">
+      <data key="observations">15</data>
+      <data key="trusted">8</data>
+      <data key="status">FAILED</data>
+      <data key="last_seen">2026-10-24T18:44:39.194Z</data>
+    </edge>
+    <edge id="e22" source="n0" target="n4">
+      <data key="observations">4</data>
+      <data key="trusted">1</data>
+      <data key="status">FAILED</data>
+      <data key="last_seen">2026-10-24T18:14:24.521Z</data>
+    </edge>
+    <edge id="e23" source="n4" target="n3">
+      <data key="observations">3</data>
+      <data key="trusted">1</data>
+      <data key="status">PASSED</data>
+      <data key="last_seen">2026-10-24T14:23:52.141Z</data>
+    </edge>
+    <edge id="e24" source="n8" target="n2">
+      <data key="observations">1</data>
+      <data key="trusted">1</data>
+      <data key="status">PASSED</data>
+      <data key="last_seen">2026-10-24T09:01:02Z</data>
+    </edge>
+    <edge id="e25" source="n3" target="n6">
+      <data key="observations">4</data>
+      <data key="trusted">4</data>
+      <data key="status">PASSED</data>
+      <data key="last_seen">2026-10-23T18:55:28.399Z</data>
+    </edge>
+    <edge id="e26" source="n1" target="n8">
+      <data key="observations">1</data>
+      <data key="trusted">1</data>
+      <data key="status">PASSED</data>
+      <data key="last_seen">2026-10-23T11:53:20Z</data>
+    </edge>
+    <edge id="e27" source="n6" target="n4">
+      <data key="observations">3</data>
+      <data key="trusted">2</data>
+      <data key="status">PASSED</data>
+      <data key="last_seen">2026-10-23T09:59:13.996Z</data>
+    </edge>
+    <edge id="e28" source="n5" target="n1">
+      <data key="observations">1</data>
+      <data key="trusted">0</data>
+      <data key="status">FAILED</data>
+      <data key="last_seen">2026-10-22T14:48:53.310Z</data>
+    </edge>
+    <edge id="e29" source="n6" target="n0">
+      <data key="observations">6</data>
+      <data key="trusted">3</data>
+      <data key="status">PASSED</data>
+      <data key="last_seen">2026-10-22T13:34:59.084Z</data>
+    </edge>
+    <edge id="e30" source="n4" target="n5">
+      <data key="observations">1</data>
+      <data key="trusted">1</data>
+      <data key="status">PASSED</data>
+      <data key="last_seen">2026-10-21T10:33:07Z</data>
+    </edge>
+    <edge id="e31" source="n7" target="n4">
+      <data key="observations">1</data>
+      <data key="trusted">0</data>
+      <data key="status">FAILED</data>
+      <data key="last_seen">2026-10-21T10:32:42Z</data>
+    </edge>
+    <edge id="e32" source="n6" target="n7">
+      <data key="observations">1</data>
+      <data key="trusted">1</data>
+      <data key="status">PASSED</data>
+      <data key="last_seen">2026-10-21T10:02:12.900Z</data>
+    </edge>
+    <edge id="e33" source="n0" target="n6">
+      <data key="observations">1</data>
+      <data key="trusted">0</data>
+      <data key="status">FAILED</data>
+      <data key="last_seen">2026-10-21T10:01:47.900Z</data>
+    </edge>
+    <edge id="e34" source="n3" target="n0">
+      <data key="observations">3</data>
+      <data key="trusted">3</data>
+      <data key="status">PASSED</data>
+      <data key="last_seen">2026-10-19T05:23:20.040Z</data>
+    </edge>
+    <edge id="e35" source="n1" target="n3">
+      <data key="observations">17</data>
+      <data key="trusted">12</data>
+      <data key="status">PASSED</data>
+      <data key="last_seen">2026-10-19T05:22:55.040Z</data>
+    </edge>
+  </graph>
+</graphml>

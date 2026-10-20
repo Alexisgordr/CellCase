@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns">
+  <key id="identity" for="node" attr.name="identity" attr.type="string"/>
+  <key id="radio_tech" for="node" attr.name="radio_tech" attr.type="string"/>
+  <key id="local_trust_state" for="node" attr.name="local_trust_state" attr.type="string"/>
+  <key id="mobility_familiarity" for="node" attr.name="mobility_familiarity" attr.type="string"/>
+  <key id="mobility_good_edges" for="node" attr.name="mobility_good_edges" attr.type="string"/>
+  <key id="mobility_relevant_trip_count" for="node" attr.name="mobility_relevant_trip_count" attr.type="string"/>
+  <key id="transition_count" for="edge" attr.name="transition_count" attr.type="int"/>
+  <key id="trusted_transition_count" for="edge" attr.name="trusted_transition_count" attr.type="int"/>
+  <key id="trip_count" for="edge" attr.name="trip_count" attr.type="int"/>
+  <graph id="ICdetectionGeometry" edgedefault="directed">
+    <node id="n0"><data key="identity">001-01-3001-1000069-LTE</data><data key="radio_tech">LTE</data><data key="local_trust_state">UNAVAILABLE</data><data key="mobility_familiarity">UNKNOWN_ON_ROUTE</data><data key="mobility_good_edges">0</data><data key="mobility_relevant_trip_count">0</data></node>
+    <node id="n1"><data key="identity">001-01-3001-1000070-LTE</data><data key="radio_tech">LTE</data><data key="local_trust_state">UNAVAILABLE</data><data key="mobility_familiarity">KNOWN_ON_ROUTE</data><data key="mobility_good_edges">2</data><data key="mobility_relevant_trip_count">6</data></node>
+    <node id="n2"><data key="identity">001-01-3001-1000071-LTE</data><data key="radio_tech">LTE</data><data key="local_trust_state">UNAVAILABLE</data><data key="mobility_familiarity">KNOWN_ON_ROUTE</data><data key="mobility_good_edges">2</data><data key="mobility_relevant_trip_count">5</data></node>
+    <node id="n3"><data key="identity">001-01-3001-1000980-LTE</data><data key="radio_tech">LTE</data><data key="local_trust_state">UNAVAILABLE</data><data key="mobility_familiarity">OBSERVED_ON_ROUTE</data><data key="mobility_good_edges">0</data><data key="mobility_relevant_trip_count">2</data></node>
+    <node id="n4"><data key="identity">001-01-3002-1000542-LTE</data><data key="radio_tech">LTE</data><data key="local_trust_state">UNAVAILABLE</data><data key="mobility_familiarity">UNKNOWN_ON_ROUTE</data><data key="mobility_good_edges">0</data><data key="mobility_relevant_trip_count">0</data></node>
+    <node id="n5"><data key="identity">001-01-3002-1000543-LTE</data><data key="radio_tech">LTE</data><data key="local_trust_state">UNAVAILABLE</data><data key="mobility_familiarity">UNKNOWN_ON_ROUTE</data><data key="mobility_good_edges">0</data><data key="mobility_relevant_trip_count">0</data></node>
+    <node id="n6"><data key="identity">001-01-3002-1000544-LTE</data><data key="radio_tech">LTE</data><data key="local_trust_state">UNAVAILABLE</data><data key="mobility_familiarity">KNOWN_ON_ROUTE</data><data key="mobility_good_edges">2</data><data key="mobility_relevant_trip_count">6</data></node>
+    <node id="n7"><data key="identity">001-01-3002-1000545-LTE</data><data key="radio_tech">LTE</data><data key="local_trust_state">UNAVAILABLE</data><data key="mobility_familiarity">UNKNOWN_ON_ROUTE</data><data key="mobility_good_edges">0</data><data key="mobility_relevant_trip_count">0</data></node>
+    <node id="n8"><data key="identity">001-01-3003-1000953-LTE</data><data key="radio_tech">LTE</data><data key="local_trust_state">UNAVAILABLE</data><data key="mobility_familiarity">UNKNOWN_ON_ROUTE</data><data key="mobility_good_edges">0</data><data key="mobility_relevant_trip_count">0</data></node>
+    <edge id="e0" source="n6" target="n1"><data key="transition_count">9</data><data key="trusted_transition_count">4</data><data key="trip_count">6</data></edge>
+    <edge id="e1" source="n1" target="n6"><data key="transition_count">14</data><data key="trusted_transition_count">7</data><data key="trip_count">0</data></edge>
+    <edge id="e2" source="n2" target="n1"><data key="transition_count">15</data><data key="trusted_transition_count">10</data><data key="trip_count">0</data></edge>
+    <edge id="e3" source="n3" target="n2"><data key="transition_count">5</data><data key="trusted_transition_count">3</data><data key="trip_count">1</data></edge>
+    <edge id="e4" source="n3" target="n1"><data key="transition_count">19</data><data key="trusted_transition_count">11</data><data key="trip_count">2</data></edge>
+    <edge id="e5" source="n2" target="n6"><data key="transition_count">6</data><data key="trusted_transition_count">3</data><data key="trip_count">5</data></edge>
+    <edge id="e6" source="n1" target="n2"><data key="transition_count">20</data><data key="trusted_transition_count">9</data><data key="trip_count">4</data></edge>
+    <edge id="e7" source="n0" target="n1"><data key="transition_count">16</data><data key="trusted_transition_count">10</data><data key="trip_count">0</data></edge>
+    <edge id="e8" source="n2" target="n0"><data key="transition_count">4</data><data key="trusted_transition_count">4</data><data key="trip_count">0</data></edge>
+    <edge id="e9" source="n6" target="n3"><data key="transition_count">7</data><data key="trusted_transition_count">6</data><data key="trip_count">0</data></edge>
+    <edge id="e10" source="n4" target="n2"><data key="transition_count">4</data><data key="trusted_transition_count">3</data><data key="trip_count">0</data></edge>
+    <edge id="e11" source="n2" target="n4"><data key="transition_count">3</data><data key="trusted_transition_count">1</data><data key="trip_count">0</data></edge>
+    <edge id="e12" source="n6" target="n2"><data key="transition_count">2</data><data key="trusted_transition_count">2</data><data key="trip_count">0</data></edge>
+    <edge id="e13" source="n4" target="n6"><data key="transition_count">3</data><data key="trusted_transition_count">2</data><data key="trip_count">0</data></edge>
+    <edge id="e14" source="n3" target="n4"><data key="transition_count">5</data><data key="trusted_transition_count">2</data><data key="trip_count">0</data></edge>
+    <edge id="e15" source="n0" target="n3"><data key="transition_count">5</data><data key="trusted_transition_count">4</data><data key="trip_count">0</data></edge>
+    <edge id="e16" source="n1" target="n0"><data key="transition_count">10</data><data key="trusted_transition_count">8</data><data key="trip_count">0</data></edge>
+    <edge id="e17" source="n2" target="n3"><data key="transition_count">4</data><data key="trusted_transition_count">2</data><data key="trip_count">1</data></edge>
+    <edge id="e18" source="n4" target="n0"><data key="transition_count">4</data><data key="trusted_transition_count">3</data><data key="trip_count">0</data></edge>
+    <edge id="e19" source="n1" target="n4"><data key="transition_count">14</data><data key="trusted_transition_count">7</data><data key="trip_count">0</data></edge>
+    <edge id="e20" source="n0" target="n2"><data key="transition_count">1</data><data key="trusted_transition_count">0</data><data key="trip_count">0</data></edge>
+    <edge id="e21" source="n4" target="n1"><data key="transition_count">15</data><data key="trusted_transition_count">8</data><data key="trip_count">0</data></edge>
+    <edge id="e22" source="n0" target="n4"><data key="transition_count">4</data><data key="trusted_transition_count">1</data><data key="trip_count">0</data></edge>
+    <edge id="e23" source="n4" target="n3"><data key="transition_count">3</data><data key="trusted_transition_count">1</data><data key="trip_count">0</data></edge>
+    <edge id="e24" source="n8" target="n2"><data key="transition_count">1</data><data key="trusted_transition_count">1</data><data key="trip_count">0</data></edge>
+    <edge id="e25" source="n3" target="n6"><data key="transition_count">4</data><data key="trusted_transition_count">4</data><data key="trip_count">0</data></edge>
+    <edge id="e26" source="n1" target="n8"><data key="transition_count">1</data><data key="trusted_transition_count">1</data><data key="trip_count">0</data></edge>
+    <edge id="e27" source="n6" target="n4"><data key="transition_count">3</data><data key="trusted_transition_count">2</data><data key="trip_count">0</data></edge>
+    <edge id="e28" source="n5" target="n1"><data key="transition_count">1</data><data key="trusted_transition_count">0</data><data key="trip_count">0</data></edge>
+    <edge id="e29" source="n6" target="n0"><data key="transition_count">6</data><data key="trusted_transition_count">3</data><data key="trip_count">0</data></edge>
+    <edge id="e30" source="n4" target="n5"><data key="transition_count">1</data><data key="trusted_transition_count">1</data><data key="trip_count">0</data></edge>
+    <edge id="e31" source="n7" target="n4"><data key="transition_count">1</data><data key="trusted_transition_count">0</data><data key="trip_count">0</data></edge>
+    <edge id="e32" source="n6" target="n7"><data key="transition_count">1</data><data key="trusted_transition_count">1</data><data key="trip_count">0</data></edge>
+    <edge id="e33" source="n0" target="n6"><data key="transition_count">1</data><data key="trusted_transition_count">0</data><data key="trip_count">0</data></edge>
+    <edge id="e34" source="n3" target="n0"><data key="transition_count">3</data><data key="trusted_transition_count">3</data><data key="trip_count">0</data></edge>
+    <edge id="e35" source="n1" target="n3"><data key="transition_count">17</data><data key="trusted_transition_count">12</data><data key="trip_count">2</data></edge>
+  </graph>
+</graphml>

@@ -1,0 +1,1 @@
+from_identity,to_identity,transition_count,trusted_transition_count,trip_count,pending_current_trip,projected_trip_count_after_valid_close,mobility_first_seen_utc,mobility_last_seen_utc,last_trip_id

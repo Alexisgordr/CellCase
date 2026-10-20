@@ -1,0 +1,6 @@
+timestamp_utc,local_trust_state,local_trust_confidence_percent,local_trust_contradictions,site_key,site_feature_state,site_novelty,site_would_trigger,site_enforced,site_reason,site_static_duration_s,site_location_accuracy_m,site_serving_days,site_neighbour_days
+"2026-10-22T14:48:53.310Z","TRUSTED","91","","","SHADOW_READY","KNOWN_CELL","false","false","NOT_NOVEL","420","","6","2"
+"2026-10-22T14:49:23.310Z","CONTRADICTED","62","SIGNAL_JUMP;PCI_FLAP","a1b2c3d4e5f60718293a","SHADOW_READY","KNOWN_CELL","false","false","NOT_NOVEL","420","12.5","6","2"
+"2026-10-22T14:49:53.310Z","CONTRADICTED","62","SIGNAL_JUMP;PCI_FLAP","a1b2c3d4e5f60718293a","SHADOW_READY","KNOWN_CELL","false","false","NOT_NOVEL","420","12.5","6","2"
+"2026-10-22T14:50:23.310Z","CONTRADICTED","62","SIGNAL_JUMP;PCI_FLAP","a1b2c3d4e5f60718293a","SHADOW_READY","KNOWN_CELL","false","false","NOT_NOVEL","420","12.5","6","2"
+"2026-10-22T14:50:53.310Z","CONTRADICTED","62","SIGNAL_JUMP;PCI_FLAP","a1b2c3d4e5f60718293a","SHADOW_READY","KNOWN_CELL","false","false","NOT_NOVEL","420","12.5","6","2"

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns">
+  <key id="identity" for="node" attr.name="identity" attr.type="string"/>
+  <key id="observations" for="edge" attr.name="observations" attr.type="int"/>
+  <key id="trusted" for="edge" attr.name="trusted_observations" attr.type="int"/>
+  <key id="status" for="edge" attr.name="last_status" attr.type="string"/>
+  <key id="last_seen" for="edge" attr.name="last_seen_utc" attr.type="string"/>
+  <graph id="ICdetectionTopology" edgedefault="directed">
+  </graph>
+</graphml>
