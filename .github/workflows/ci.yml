@@ -2,8 +2,8 @@
 #
 # - core:   pruebas del núcleo (JUnit), pruebas de JVM de la app y generación de los PDF de muestra.
 # - app:    lint, APK debug y release (sin firmar) y tamaño de la release.
-# - datos:  catálogos de textos es/en, determinismo de las muestras de ICdetector 3.0 y verificación de las muestras
-#           contra el código de ICdetector v2.10.5 y v3.0.0.
+# - datos:  catálogos de textos es/en, determinismo de las muestras de ICdetector 3.0 y 3.1 y verificación de las
+#           muestras contra el código de ICdetector v2.10.5, v3.0.0 y v3.1.0.
 # - device: pruebas instrumentadas (app/src/androidTest) en un emulador.
 #
 # Ejecutores fijados en Ubuntu 24.04 (no ubuntu-latest) para que la imagen (y su SDK de Android) sea reproducible.
@@ -115,6 +115,11 @@ jobs:
           python3 tools/synth/generate_icd30.py
           git status --porcelain samples/synthetic/icd30
           test -z "$(git status --porcelain samples/synthetic/icd30)"
+      - name: Las muestras de ICdetector 3.1 se regeneran idénticas
+        run: |
+          python3 tools/synth/generate_icd31.py
+          git status --porcelain samples/synthetic/icd31
+          test -z "$(git status --porcelain samples/synthetic/icd31)"
       - name: Código de ICdetector v2.10.5
         uses: actions/checkout@v7
         with:
@@ -127,10 +132,18 @@ jobs:
           repository: alexisgordr/ICdetector
           ref: v3.0.0
           path: icdetector-3.0.0
+      - name: Código de ICdetector v3.1.0
+        uses: actions/checkout@v7
+        with:
+          repository: alexisgordr/ICdetector
+          ref: v3.1.0
+          path: icdetector-3.1.0
       - name: Muestras 2.10.5 = código de ICdetector v2.10.5
         run: python3 tools/synth/verify_against_source.py icdetector-2.10.5
       - name: Muestras 3.0 = código de ICdetector v3.0.0
         run: python3 tools/synth/verify_icd30_against_source.py icdetector-3.0.0
+      - name: Muestras 3.1 = código de ICdetector v3.1.0
+        run: python3 tools/synth/verify_icd31_against_source.py icdetector-3.1.0
 
   device:
     name: Pruebas instrumentadas (emulador)
