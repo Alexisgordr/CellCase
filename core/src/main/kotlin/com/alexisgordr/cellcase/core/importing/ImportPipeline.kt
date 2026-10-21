@@ -35,7 +35,7 @@ import java.time.Instant
 import java.time.LocalDate
 
 /** Versión del conjunto de lectores. Se registra con cada resultado. */
-const val READERS_VERSION = "readers/2.3.0"
+const val READERS_VERSION = "readers/2.4.0"
 
 /** Resultado de una importación, con categorías de error separadas (D-027). */
 enum class ImportState { IMPORTED, UNRECOGNIZED, DAMAGED_ZIP, ZIP_SECURITY, INCOMPATIBLE, NOT_IMPLEMENTED, READ_ERROR, TOO_LARGE }

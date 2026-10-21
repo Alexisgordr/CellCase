@@ -81,7 +81,7 @@
     <string name="delete_not_deleted">The original files you chose with the picker and the PDFs you saved outside CellCase are not deleted.</string>
     <string name="delete_irreversible">This action cannot be undone.</string>
     <string name="files_title">Files</string>
-    <string name="files_help">You can select several ICdetector files at once: the exported CSV and ZIP files (History, Radio, Topology, Stable-Site, Geometry and forensic cases, from 2.10.5 or 3.0) or the ICdetector 3.0.0 backup (.icdbackup), which contains all of them. You can add more later. Each file is processed separately; an identical file (same SHA-256) is not counted twice.</string>
+    <string name="files_help">You can select several ICdetector files at once: the exported CSV and ZIP files (History, Radio, Topology, Stable-Site, Geometry and forensic cases, from 2.10.5, 3.0 or 3.1.0) or the ICdetector 3.0.0 or 3.1.0 backup (.icdbackup), which contains all of them. You can add more later. Each file is processed separately; an identical file (same SHA-256) is not counted twice.</string>
     <string name="batch_title">Import result</string>
     <string name="batch_already_present">Already present: identical (same SHA-256) to «%1$s». It is not imported or counted again.</string>
     <string name="batch_failed">%1$s. The other files are not affected.</string>

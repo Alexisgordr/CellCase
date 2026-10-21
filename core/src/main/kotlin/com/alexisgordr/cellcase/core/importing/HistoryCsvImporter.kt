@@ -30,7 +30,7 @@ import java.nio.charset.CodingErrorAction
 import java.nio.charset.StandardCharsets
 
 /** Versión del lector. Se guarda con cada importación: el análisis se reproduce con el lector registrado. */
-const val HISTORY_READER_VERSION = "history-csv/1.1.0"
+const val HISTORY_READER_VERSION = "history-csv/1.2.0"
 
 /** Columnas del historial de ICdetector 2.10.5 (export-formats.md §1.3). */
 object HistoryColumns {

@@ -80,7 +80,7 @@ object GenerateSampleReport {
                 periodOfInterest = null
             ),
             results,
-            ReportOptions(coords, if (masked) IdentifierMode.MASKED else IdentifierMode.FULL, Instant.parse("2026-10-02T08:05:00Z"), "0.1.0", mode = mode, crossAnnex = crossAnnex)
+            ReportOptions(coords, if (masked) IdentifierMode.MASKED else IdentifierMode.FULL, Instant.parse("2026-10-02T08:05:00Z"), "0.2.0", mode = mode, crossAnnex = crossAnnex)
         )
         out.parentFile?.mkdirs()
         val pages = out.outputStream().use { ReportBuilder(reportTexts(lang)).writePdf(ctx, analysis, it) }

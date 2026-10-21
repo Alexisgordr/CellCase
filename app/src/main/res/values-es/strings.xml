@@ -80,7 +80,7 @@
     <string name="delete_not_deleted">No se borran los archivos originales que elegiste con el selector ni los PDF que guardaste fuera de CellCase.</string>
     <string name="delete_irreversible">Esta acción no se puede deshacer.</string>
     <string name="files_title">Archivos</string>
-    <string name="files_help">Puedes seleccionar varios archivos de ICdetector a la vez: los CSV y ZIP exportados (Historial, Radio, Topología, Stable-Site, Geometría y casos forenses, de la 2.10.5 o la 3.0) o la copia de seguridad (.icdbackup) de ICdetector 3.0.0, que los contiene todos. Puedes añadir más después. Cada archivo se procesa por separado; un archivo idéntico (mismo SHA-256) no se cuenta dos veces.</string>
+    <string name="files_help">Puedes seleccionar varios archivos de ICdetector a la vez: los CSV y ZIP exportados (Historial, Radio, Topología, Stable-Site, Geometría y casos forenses, de la 2.10.5, la 3.0 o la 3.1.0) o la copia de seguridad (.icdbackup) de ICdetector 3.0.0 o 3.1.0, que los contiene todos. Puedes añadir más después. Cada archivo se procesa por separado; un archivo idéntico (mismo SHA-256) no se cuenta dos veces.</string>
     <string name="batch_title">Resultado de la importación</string>
     <string name="batch_already_present">Ya presente: es idéntico (mismo SHA-256) a «%1$s». No se importa ni se cuenta otra vez.</string>
     <string name="batch_failed">%1$s. El resto de archivos no se ve afectado.</string>

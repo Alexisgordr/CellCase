@@ -44,7 +44,7 @@ object IcdBackupFormat {
     /** Las betas de 3.0 escribían del 20 al 24: no se leen. */
     const val FIRST_SCHEMA = 20
     /** Versión del lector de copias. Se guarda con la importación, como la de los demás lectores. */
-    const val READER_VERSION = "backup-icd/1.0.0"
+    const val READER_VERSION = "backup-icd/1.1.0"
 }
 
 /** Límites de la copia (docs/limits.md). La base no se carga en memoria: se copia a un archivo temporal. */

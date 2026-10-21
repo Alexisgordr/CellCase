@@ -32,7 +32,12 @@ object Rules {
     val CELLS = RuleRef("DESC-CELLS", 1)
     val POWER = RuleRef("DESC-POWER", 1)
     val TA = RuleRef("COH-TA", 1)
-    val COLLECTOR = RuleRef("COL-RESULTS", 1)
+    /** /2: las filas de ICdetector 3.1.0 no tienen verificación externa (cellcase-rules/2). */
+    val COLLECTOR = RuleRef("COL-RESULTS", 2)
+    /** Reglas no evaluadas por ICdetector, separando falta de datos de retirada, sombra y reserva (NotEvaluated.kt). */
+    val RULE_COVERAGE = RuleRef("COL-RULES", 1)
+    /** Historial con filas de antes y de después de ICdetector 3.1.0 (DatasetCuts.kt). */
+    val DATASET_CUT = RuleRef("QUAL-CUT", 1)
     val DUP = RuleRef("COH-DUP", 1)
     val TESTNET = RuleRef("QUAL-TESTNET", 1)
     fun missing(kind: ExportKind) = RuleRef("MISSING-${kind.name}", 1)

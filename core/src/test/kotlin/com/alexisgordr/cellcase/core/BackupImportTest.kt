@@ -263,7 +263,7 @@ class BackupImportTest {
             if (mode == com.alexisgordr.cellcase.core.report.ReportMode.FULL) {
                 assertTrue("$lang: bloque de la copia", text.contains(com.alexisgordr.cellcase.core.i18n.Messages.format(lang, "backup.report.title", emptyList())))
                 assertTrue("$lang: partes en la tabla de archivos", text.contains("SYNTHETIC_icd30_fresh.icdbackup › history.csv"))
-                assertTrue("$lang: versión del lector", text.contains("backup-icd/1.0.0"))
+                assertTrue("$lang: versión del lector", text.contains("backup-icd/1.1.0"))
             }
             assertFalse("$lang $mode: texto sin traducir", Regex("\\b(import\\.backup|backup\\.report|profile\\.(level|lay|k|v|col|abstain|mode|maturity|title|intro))\\.?\\w").containsMatchIn(text))
             com.alexisgordr.cellcase.core.report.ReportBuilder(com.alexisgordr.cellcase.core.report.reportTexts(lang)).writePdf(ctx, a, ByteArrayOutputStream())
