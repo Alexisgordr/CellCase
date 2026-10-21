@@ -101,11 +101,17 @@ check("Historial: todas las filas con 57 campos", all(len(r) == 57 for r in rows
 check("Radio: cabecera = ExportUtils.SERVICE_STATE_CSV_HEADER",
       first_line(sample("SYNTHETIC_icd31_service_state.csv")) == kotlin_const(export_utils, "SERVICE_STATE_CSV_HEADER"))
 H = rows[0]
-build_commit = open(os.path.join(SRC, "BUILD_COMMIT"), encoding="utf-8").read().strip()
+# AppVersion = versionName + "+" + commit corto (app/build.gradle.kts, core/AppBuildId.kt). El commit depende de la
+# compilación (en una copia de git, BUILD_COMMIT es la plantilla "$Format:%h$" de export-subst), así que se comprueba
+# el formato y el versionName del código; las muestras usan el commit con el que se generaron (90627b7).
+gradle = open(os.path.join(SRC, "app", "build.gradle.kts"), encoding="utf-8").read()
+version_name = re.search(r'versionName\s*=\s*"([^"]+)"', gradle).group(1)
+check("Código: versionName = 3.1.0", version_name == "3.1.0", version_name)
+app_version_re = re.compile(re.escape(version_name) + r"\+[0-9a-f]{7}")
 r31 = [r for r in rows[1:] if r[H.index("AppVersion")].startswith("3.1.0")]
 older = [r for r in rows[1:] if not r[H.index("AppVersion")].startswith("3.1.0")]
 check("Muestra: filas de 3.1.0 y anteriores en el mismo historial", len(r31) > 0 and len(older) > 0, f"{len(r31)} / {len(older)}")
-check("Muestra: AppVersion de 3.1.0 = versionName+BUILD_COMMIT", all(r[H.index("AppVersion")] == f"3.1.0+{build_commit}" for r in r31))
+check("Muestra: AppVersion de 3.1.0 = versionName+commit", all(app_version_re.fullmatch(r[H.index("AppVersion")]) for r in r31))
 motions = set(re.findall(r"enum class ChurnMotion \{ ([A-Z, ]+) \}", read("core/CellChurn.kt"))[0].replace(" ", "").split(","))
 check("Churn: ChurnMotion de las filas 3.1.0 en el enum ChurnMotion", all(r[H.index("ChurnMotion")] in motions for r in r31), str(motions))
 check("Churn: enteros ≥ 0 en las filas 3.1.0", all(r[H.index(c)].isdigit() for r in r31 for c in ("ChurnCells15m", "ChurnChanges15m")))
@@ -231,8 +237,8 @@ for kind in ["icd31"]:
         tl = zentries(os.path.join(SAMPLES, "SYNTHETIC_icd31_ICD-2026-10-28-0004.zip"))["timeline.csv"].decode()
         tr = list(csv.reader(io.StringIO(tl)))
         check("Forense 3.1.0: latency_state vacía en timeline.csv", all(r[tr[0].index("latency_state")] == "" for r in tr[1:]))
-        man_ok = man.get("appVersion") == f"3.1.0+{build_commit}"
-        check("Copia: appVersion del manifiesto = 3.1.0+BUILD_COMMIT", man_ok, str(man.get("appVersion")))
+        man_ok = app_version_re.fullmatch(str(man.get("appVersion"))) is not None
+        check("Copia: appVersion del manifiesto = versionName+commit", man_ok, str(man.get("appVersion")))
     con.close()
     os.unlink(t.name)
 
