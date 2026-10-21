@@ -20,6 +20,7 @@ import com.alexisgordr.cellcase.core.report.ReportOptions
 import com.alexisgordr.cellcase.core.report.TextContext
 import com.alexisgordr.cellcase.core.report.reportTexts
 import org.junit.Assert.assertEquals
+import org.junit.Assert.fail
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -47,6 +48,8 @@ class Icd31ChurnTest {
         assertEquals(1, ChurnAnalyzer.percentile(listOf(1), 0.9))
         assertEquals(3, ChurnAnalyzer.percentile(listOf(1, 2, 3, 4, 5), 0.5))
         assertEquals(9, ChurnAnalyzer.percentile((1..10).toList(), 0.9))
+        assertEquals(10, ChurnAnalyzer.percentile((1..10).toList(), 1.0))
+        try { ChurnAnalyzer.percentile(emptyList(), 0.9); fail("lista vacía") } catch (e: IllegalArgumentException) { }
         assertEquals(10, ChurnAnalyzer.percentile((1..10).toList(), 1.0))
     }
 

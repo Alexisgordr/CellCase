@@ -7,7 +7,7 @@
     <a href="#requirements"><img alt="Android 8.0+" src="https://img.shields.io/badge/Android-8.0%2B%20(API%2026)-3DDC84.svg?logo=android&logoColor=white"></a>
     <img alt="Version 0.2.0" src="https://img.shields.io/badge/version-0.2.0-orange.svg">
     <img alt="Kotlin 2.4" src="https://img.shields.io/badge/Kotlin-2.4-7F52FF.svg?logo=kotlin&logoColor=white">
-    <a href="#tests"><img alt="299 tests" src="https://img.shields.io/badge/tests-299%20passing-brightgreen.svg"></a>
+    <a href="#tests"><img alt="300 tests" src="https://img.shields.io/badge/tests-300%20passing-brightgreen.svg"></a>
     <a href="https://github.com/Alexisgordr/CellCase/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Alexisgordr/CellCase/actions/workflows/ci.yml/badge.svg"></a>
   </p>
   <p><em>No accounts · No network · No analytics · Open source</em></p>
@@ -116,7 +116,7 @@ The `:core` module has no Android dependency, so the whole import → analysis �
 
 | Suite | Count | Where |
 |---|---|---|
-| Core (JUnit 4, JVM) | 273 | `core/src/test` |
+| Core (JUnit 4, JVM) | 274 | `core/src/test` |
 | App logic (JVM) | 19 | `app/src/test` |
 | Instrumented (device/emulator) | 7 | `app/src/androidTest` |
 

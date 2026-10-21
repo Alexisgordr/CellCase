@@ -36,8 +36,9 @@ tienen vacíos), `ChurnAnalyzer.of` calcula:
 - Por estado de movimiento (en el orden quieto, en movimiento, desconocido; una fila sin `ChurnMotion` cuenta como
   desconocido): filas, y mediana, P90 y máximo de celdas y de cambios en 15 min. Los percentiles son **por rango
   más cercano** (el valor en la posición ⌈p·n⌉ de la lista ordenada), así que siempre son valores observados.
-- **Franjas con valores altos**: filas seguidas (a 15 min o menos una de la siguiente, la ventana de H17) con
-  `ChurnChanges15m` mayor o igual que el **P90 de cambios de este expediente**. Es una referencia del propio
+- **Franjas con valores altos**: filas con `ChurnChanges15m` mayor o igual que el **P90 de cambios de este
+  expediente**, agrupadas mientras entre una y la siguiente de ellas pasen 15 min o menos (la ventana de H17). Las
+  filas intermedias por debajo del P90 no rompen la franja ni cuentan en ella. Es una referencia del propio
   historial, no un umbral de ICdetector ni de CellCase, y se dice así en el informe. Si el P90 es 0 no hay franjas.
   Se muestran hasta cinco, de más a menos cambios, cada una con su periodo, número de filas, máximo de cambios y de
   celdas, estados de movimiento y la **fila con más cambios** (archivo y línea: su procedencia).

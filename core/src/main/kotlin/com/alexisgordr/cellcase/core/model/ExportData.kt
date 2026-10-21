@@ -143,6 +143,8 @@ data class ForensicCaseData(
     val terminalLines: Int get() = terminal.size
     val start: Instant? get() = samples.mapNotNull { it.time }.minOrNull()
     val end: Instant? get() = samples.mapNotNull { it.time }.maxOrNull()
+    /** Grabado por ICdetector 3.1.0 o posterior: sin verificación externa; el `verified` de sus muestras es siempre PENDING. */
+    val externalVerificationRetired: Boolean get() = com.alexisgordr.cellcase.core.importing.IcdVersion.atLeast(meta.appVersion, 3, 1, 0)
 }
 
 // ───────────────────────── Topología ─────────────────────────

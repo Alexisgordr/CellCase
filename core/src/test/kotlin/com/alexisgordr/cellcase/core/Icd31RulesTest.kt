@@ -66,8 +66,10 @@ class Icd31RulesTest {
         assertEquals("cellcase-rules/2", RULESET_VERSION)
         for (lang in Language.values()) {
             val t = text(lang, a31)
-            assertTrue(t.contains(m(lang, "report.limitations.verification_retired_mixed", from31.toString(), (rows.size - from31).toString()).take(40)))
-            assertTrue(t.contains(m(lang, "report.historyAnnex.verification_retired", "").trim().take(30)))
+            // Con las cifras (el formato regional de estas muestras no lleva separador de millares: < 10 000 filas)
+            val mixed = m(lang, "report.limitations.verification_retired_mixed", from31.toString(), (rows.size - from31).toString())
+            assertTrue("$lang: $mixed", t.contains(mixed.substring(0, mixed.indexOf((rows.size - from31).toString()) + (rows.size - from31).toString().length)))
+            assertTrue(t.contains(m(lang, "report.historyAnnex.verification_retired", from31.toString()).trim()))
         }
         // Historial solo de 3.0: sin frase de verificación retirada
         val a30 = analyze(import(csv30.readBytes()))
@@ -93,11 +95,12 @@ class Icd31RulesTest {
         return lines[0] + "\n" + f.joinToString(",") + "\n"
     }
 
-    /** El caso 0004 con `verified` = NOT_FOUND en sus muestras (como una captura de 3.0 sobre la misma celda). */
+    /** El caso 0004 como si lo hubiera grabado la 3.0.0 (`appVersion` de `case.json`) con `verified` = NOT_FOUND en sus muestras. */
     private fun caseNotFound(): ByteArray {
         val entries = LinkedHashMap<String, ByteArray>()
         ZipInputStream(TestSupport.sample("icd31/SYNTHETIC_icd31_ICD-2026-10-28-0004.zip").inputStream()).use { z -> while (true) { val e = z.nextEntry ?: break; entries[e.name] = z.readBytes() } }
         entries["timeline.csv"] = String(entries.getValue("timeline.csv")).replace("\"PENDING\"", "\"NOT_FOUND\"").toByteArray()
+        entries["case.json"] = String(entries.getValue("case.json")).replace("\"3.1.0+90627b7\"", "\"3.0.0+f5173a8\"").toByteArray()
         entries["SHA256SUMS.txt"] = entries.filterKeys { it != "SHA256SUMS.txt" }.entries.joinToString("") { (n, b) -> Hashing.sha256Hex(b) + "  " + n + "\n" }.toByteArray()
         val out = ByteArrayOutputStream()
         ZipOutputStream(out).use { z -> entries.forEach { (n, b) -> z.putNextEntry(ZipEntry(n)); z.write(b); z.closeEntry() } }
@@ -110,6 +113,18 @@ class Icd31RulesTest {
             .cross!!.findings.any { f -> f.compared.any { it.field == CrossField.VERIFIED } }
         assertFalse("fila 3.1.0: su PENDING no se compara", verifiedCompared("3.1.0+90627b7"))
         assertTrue("fila 3.0.0: se sigue comparando", verifiedCompared("3.0.0+f5173a8"))
+    }
+
+    /** Un caso forense grabado por 3.1.0 (PENDING sin significado) frente a una fila de 3.0 con VERIFIED: tampoco se compara. */
+    @Test fun crossSourcesDoNotCompareVerifiedOfForensicCasesFrom31() {
+        val row30 = rowAtCase("3.0.0+f5173a8").replace(",PENDING,", ",VERIFIED,")
+        assertTrue(row30.contains(",VERIFIED,"))
+        val case31 = TestSupport.sample("icd31/SYNTHETIC_icd31_ICD-2026-10-28-0004.zip").readBytes()
+        val a = analyze(import(row30.toByteArray()), import(case31, "caso31.zip"))
+        assertTrue(a.forensicCases.single().second.externalVerificationRetired)
+        assertFalse("caso 3.1.0: su PENDING no se compara con el VERIFIED de la fila", a.cross!!.findings.any { f -> f.compared.any { it.field == CrossField.VERIFIED } })
+        // Sin la fila, el emparejamiento en sí sigue existiendo (el caso y la fila se cruzan por celda y hora)
+        assertTrue(a.cross!!.findings.any { it.check == com.alexisgordr.cellcase.core.analysis.CrossCheck.FORENSIC_HISTORY })
     }
 
     // ── 4. Motivos de «no evaluada» ──

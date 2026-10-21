@@ -1859,7 +1859,7 @@ open class ReportTextsImpl(final override val language: Language) : ReportTexts 
         val fields = DatasetCuts.ICD_3_1_0.map { if (it == "LOCAL_CELL_TRUST") t("dataset_cut.local_cell_trust") else it }
         return listOf(Block.Callout(CalloutKind.NOTE, t("dataset_cut.title"),
             t("dataset_cut.text", int(v.rowsBefore.toLong()), v.lastBefore?.let { short(ctx, it) } ?: "—", int(v.rowsFrom31.toLong()),
-                v.firstFrom31?.let { short(ctx, it) } ?: "—", fields.dropLast(1).joinToString(", ") + t("dataset_cut.and") + fields.last())))
+                v.firstFrom31?.let { short(ctx, it) } ?: "—", fields.dropLast(1).joinToString(", ") + " " + t("dataset_cut.and") + " " + fields.last())))
     }
 
     /** Reglas que ICdetector no evaluó, separando la falta de datos de las retiradas, en sombra o reservadas. */

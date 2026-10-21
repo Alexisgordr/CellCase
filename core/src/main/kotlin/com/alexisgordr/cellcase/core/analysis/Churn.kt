@@ -49,7 +49,10 @@ object ChurnAnalyzer {
     const val MAX_BANDS = 5
 
     /** Percentil por rango más cercano de una lista ordenada: el valor en la posición ⌈p·n⌉. */
-    fun percentile(sorted: List<Int>, p: Double): Int = sorted[(Math.ceil(p * sorted.size).toInt() - 1).coerceIn(0, sorted.size - 1)]
+    fun percentile(sorted: List<Int>, p: Double): Int {
+        require(sorted.isNotEmpty()) { "percentil de una lista vacía" }
+        return sorted[(Math.ceil(p * sorted.size).toInt() - 1).coerceIn(0, sorted.size - 1)]
+    }
 
     /** Null si el historial no tiene ninguna fila con churn (anterior a 3.1.0). */
     fun of(rows: List<HistoryObservation>): ChurnSummary? {
