@@ -46,7 +46,11 @@ class Icd30Exports(
 
     // ───────────────────────── historial (ExportUtils.kt, CellDbHelper.forEachRecord/readRecord) ─────────────────────────
 
-    /** Historial CSV con las 54 columnas de 3.0 (`ExportUtils.CSV_HEADER`, `csvRow`). Null si no hay tabla `history`. */
+    /**
+     * Historial CSV como `ExportUtils.CSV_HEADER`/`csvRow`: 54 columnas de 3.0.0 y, si la tabla `history` tiene las
+     * columnas del churn (esquema 26, ICdetector 3.1.0), las 3 de 3.1.0 al final. Se decide por las columnas de la
+     * tabla, no por el número de esquema. Null si no hay tabla `history`.
+     */
     fun historyCsv(): ByteArray? {
         val h = load("history") ?: return null
         val ev = load("profile_evaluations")
@@ -56,7 +60,8 @@ class Icd30Exports(
         // ORDER BY h.observed_at_ms DESC, h.id DESC (NULL va al final en orden descendente)
         val obsCol = h.col("observed_at_ms")
         val ordered = h.rows.sortedWith(compareByDescending<SqliteFile.Row> { r -> r[obsCol]?.let { sortKey(it) } }.thenByDescending { it.rowid })
-        val sb = StringBuilder(HISTORY_HEADER).append('\n')
+        val churn = CHURN_COLUMNS.all { h.col(it) >= 0 }
+        val sb = StringBuilder(if (churn) HISTORY_HEADER_31 else HISTORY_HEADER).append('\n')
         for (r in ordered) {
             fun s(c: String) = CursorValue.string(r.v(h, c))
             fun has(c: String) = h.col(c) >= 0 && r.v(h, c) != null
@@ -87,7 +92,7 @@ class Icd30Exports(
                 p?.let { "${pi("metrics_evaluated") ?: 0}/${pi("metrics_total") ?: 0}" }, ps("abstain_reason"), p?.let { pi("algorithm_version") ?: 0 },
                 ps("profile_revision"), ps("evidence"), p?.let { if (pi("learned") == 1) 1 else 0 }, p?.let { if (pi("holdout") == 1) 1 else 0 },
                 if (h.col("id") >= 0) r.rowid else null, s("observation_id")
-            )
+            ) + if (churn) listOf(optInt("churn_cells_15m"), optInt("churn_changes_15m"), s("churn_motion")) else emptyList()
             values.joinTo(sb, ",") { field(it) }; sb.append('\n')
         }
         return sb.toString().toByteArray(Charsets.UTF_8)
@@ -507,6 +512,10 @@ class Icd30Exports(
             "SecondaryCarriers,ServiceState,NetworkOperator,SimOperator,NetworkRoaming,ObservedAtUtc,NotEvaluatedHeuristics,GpsAccuracyM," +
             "AppVersion,ExportDevice,ExportAndroid,LocationMode,ProfileMode,ProfileLevel,ProfileScore,ProfileCoverage,ProfileAbstainReason," +
             "ProfileAlgorithm,ProfileRevision,ProfileEvidence,ProfileLearned,ProfileHoldout,RowId,ObservationId"
+        /** ICdetector 3.1.0: las mismas 54 columnas y el churn de H17 al final (57). */
+        const val HISTORY_HEADER_31 = "$HISTORY_HEADER,ChurnCells15m,ChurnChanges15m,ChurnMotion"
+        /** Columnas de `history` que añade el esquema 26 (`SchemaV26`). */
+        val CHURN_COLUMNS = listOf("churn_cells_15m", "churn_changes_15m", "churn_motion")
         const val SERVICE_HEADER = "TimestampUtc,State,DataRegistered,VoiceRegistered,Searching,Roaming,NetworkOperator,NetworkName,SimOperator," +
             "ManualSelection,ChannelNumber,CellBandwidthsKHz,DataNetwork,VoiceNetwork,Source"
         const val INTEGRITY_NOTE = "SHA-256 detects later modification; it is not a legal chain-of-custody signature."
@@ -554,6 +563,7 @@ class Icd30Exports(
         /** `versionCode` de las versiones publicadas que conoce CellCase (la copia no lo guarda). 0 si no se conoce. */
         fun knownVersionCode(appVersion: String): Long = when (appVersion.substringBefore('+')) {
             "3.0.0" -> 39L
+            "3.1.0" -> 40L
             else -> 0L
         }
 

@@ -58,13 +58,22 @@ object HistoryColumns {
         "ProfileRevision", "ProfileEvidence", "ProfileLearned", "ProfileHoldout", "RowId", "ObservationId"
     )
 
+    /**
+     * Añadidas en ICdetector 3.1.0, al final: churn de celdas de 15 min de H17, en sombra (docs/history-csv-columns.md
+     * de ICdetector). Vacías en las filas grabadas antes de 3.1.0.
+     */
+    val V31 = listOf("ChurnCells15m", "ChurnChanges15m", "ChurnMotion")
+
+    /** Valores de `ChurnMotion` (`ChurnMotion` de ICdetector 3.1.0). */
+    val CHURN_MOTIONS = setOf("STILL", "MOVING", "UNKNOWN")
+
     /** Columnas del perfil local (3.0). Pueden rellenarse después de grabarse la fila (evaluaciones reservadas). */
     val PROFILE = V3.filter { it.startsWith("Profile") }
 
     /** Constantes de toda la exportación, no de la fila: no se comparan entre archivos (merge/4). */
     val PER_EXPORT = setOf("ExportDevice", "ExportAndroid")
 
-    val ALL = BASE + RADIO_CONTEXT + V3
+    val ALL = BASE + RADIO_CONTEXT + V3 + V31
 }
 
 enum class HistorySchema(val label: Msg, val supported: Boolean) {
@@ -73,11 +82,13 @@ enum class HistorySchema(val label: Msg, val supported: Boolean) {
     PARTIAL_RADIO_CONTEXT(msg("import.supported.contexto_de_radio_incompleto"), true),
     /** ICdetector 3.0: todas las columnas nuevas. Los textos llevan el apóstrofo protector (§0.2). */
     V3_0(msg("import.supported.icdetector_3_0"), true),
-    /** Algunas columnas de 3.0, no todas (archivo editado o versión intermedia). */
-    PARTIAL_V3(msg("import.supported.v3_partial"), true);
+    /** Algunas columnas de 3.0 o de 3.1.0, no todas (archivo editado o versión intermedia). */
+    PARTIAL_V3(msg("import.supported.v3_partial"), true),
+    /** ICdetector 3.1.0: las columnas de 3.0 y las tres del churn de H17 (57). */
+    V3_1(msg("import.supported.icdetector_3_1"), true);
 
     /** Escrito por ICdetector 3.0 o posterior: los textos pueden llevar el apóstrofo protector. */
-    val isV3: Boolean get() = this == V3_0 || this == PARTIAL_V3
+    val isV3: Boolean get() = this == V3_0 || this == PARTIAL_V3 || this == V3_1
 }
 
 data class HistoryImportLimits(
@@ -200,8 +211,12 @@ class HistoryCsvImporter(private val limits: HistoryImportLimits = HistoryImport
         }
         val presentCtx = HistoryColumns.RADIO_CONTEXT.filter { it in header }
         val presentV3 = HistoryColumns.V3.filter { it in header }
+        val presentV31 = HistoryColumns.V31.filter { it in header }
+        val completeV3 = presentV3.size == HistoryColumns.V3.size && presentCtx.size == HistoryColumns.RADIO_CONTEXT.size
         val schema = when {
-            presentV3.size == HistoryColumns.V3.size && presentCtx.size == HistoryColumns.RADIO_CONTEXT.size -> HistorySchema.V3_0
+            completeV3 && presentV31.size == HistoryColumns.V31.size -> HistorySchema.V3_1
+            completeV3 && presentV31.isEmpty() -> HistorySchema.V3_0
+            presentV31.isNotEmpty() -> HistorySchema.PARTIAL_V3
             presentV3.isNotEmpty() -> HistorySchema.PARTIAL_V3
             presentCtx.size == HistoryColumns.RADIO_CONTEXT.size -> HistorySchema.V2_10_4_PLUS
             presentCtx.isEmpty() -> HistorySchema.V2_1_TO_2_10_3
@@ -215,8 +230,10 @@ class HistoryCsvImporter(private val limits: HistoryImportLimits = HistoryImport
                 msg("import.checkHeader.solo_de_columnas_de_contexto", presentCtx.size, HistoryColumns.RADIO_CONTEXT.size) +
                     HistoryColumns.RADIO_CONTEXT.filter { it !in header }.joinToString() + ".")
             HistorySchema.PARTIAL_V3 -> issues.add("SCHEMA_PARTIAL_V3", Severity.WARNING, null,
-                msg("import.checkHeader.v3_partial", presentV3.size, HistoryColumns.V3.size,
-                    (HistoryColumns.V3 + HistoryColumns.RADIO_CONTEXT).filter { it !in header }.joinToString()))
+                msg("import.checkHeader.v3_partial", presentV3.size + presentV31.size,
+                    HistoryColumns.V3.size + if (presentV31.isEmpty()) 0 else HistoryColumns.V31.size,
+                    (HistoryColumns.V3 + HistoryColumns.RADIO_CONTEXT + if (presentV31.isEmpty()) emptyList() else HistoryColumns.V31)
+                        .filter { it !in header }.joinToString()))
             else -> {}
         }
         val extra = header.filter { it !in HistoryColumns.ALL }
@@ -354,6 +371,11 @@ class HistoryCsvImporter(private val limits: HistoryImportLimits = HistoryImport
         val appVersion = r.raw("AppVersion")?.takeIf { it.isNotEmpty() }
         val locationMode = enumText(r, "LocationMode", setOf("CONTINUOUS", "INTELLIGENT", "ADAPTIVE"))
         val observationId = r.raw("ObservationId")?.takeIf { it.isNotEmpty() }
+        // Churn de H17 (3.1.0): enteros ≥ 0 y un movimiento conocido. Un valor inválido es un aviso con su
+        // procedencia (se trata como sin dato), nunca un motivo para rechazar el archivo.
+        val churnCells = int(r, "ChurnCells15m", sentinels = emptySet(), range = 0..Int.MAX_VALUE)
+        val churnChanges = int(r, "ChurnChanges15m", sentinels = emptySet(), range = 0..Int.MAX_VALUE)
+        val churnMotion = enumText(r, "ChurnMotion", HistoryColumns.CHURN_MOTIONS)
 
         return HistoryObservation(
             provenance = prov, time = time, identity = identities.getOrPut(identity) { identity }, netTypeLabel = netType, dbm = dbm,
@@ -365,7 +387,8 @@ class HistoryCsvImporter(private val limits: HistoryImportLimits = HistoryImport
             serviceState = serviceState, networkOperator = netOp, simOperator = simOp, networkRoaming = roaming,
             raw = rawMap, states = if (r.states.isEmpty()) emptyMap() else r.states.toMap(), uninterpreted = unint,
             observedAtUtc = utc, notEvaluatedHeuristics = notEvaluated, gpsAccuracyM = gpsAcc, appVersion = appVersion,
-            locationMode = locationMode, profile = profile, rowId = rowId, observationId = observationId
+            locationMode = locationMode, profile = profile, rowId = rowId, observationId = observationId,
+            churnCells15m = churnCells, churnChanges15m = churnChanges, churnMotion = churnMotion
         )
     }
 

@@ -128,7 +128,11 @@ class BackupImportTest {
         assertEquals(ImportState.INCOMPATIBLE, state { it.replace("\"format\": 1", "\"format\": 2") }.state)
         val beta = state { it.replace("\"schemaVersion\": 25", "\"schemaVersion\": 24") }
         assertEquals(ImportState.INCOMPATIBLE, beta.state); assertTrue(beta.messageText.toString().contains("24"))
-        assertEquals(ImportState.INCOMPATIBLE, state { it.replace("\"schemaVersion\": 25", "\"schemaVersion\": 26") }.state)
+        // 26 (ICdetector 3.1.0) se lee; aquí el manifiesto no cuadra con la base (esquema 25) y se avisa
+        val s26 = state { it.replace("\"schemaVersion\": 25", "\"schemaVersion\": 26") }
+        assertEquals(ImportState.IMPORTED, s26.state); assertTrue(s26.issues.any { it.code == "BACKUP_USER_VERSION" })
+        val newer = state { it.replace("\"schemaVersion\": 25", "\"schemaVersion\": 27") }
+        assertEquals(ImportState.INCOMPATIBLE, newer.state); assertTrue(newer.messageText.toString().contains("27"))
         assertEquals(ImportState.INCOMPATIBLE, state { it.replace("\"schemaVersion\": 25", "\"schemaVersion\": 19") }.state)
         assertEquals(ImportState.UNRECOGNIZED, state { it.replace("com.alexisgordr.icdetector", "com.otra.app") }.state)
         assertEquals(ImportState.INCOMPATIBLE, state { "no es json" }.state)

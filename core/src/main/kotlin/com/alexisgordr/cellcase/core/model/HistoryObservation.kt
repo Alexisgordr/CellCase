@@ -62,8 +62,20 @@ data class HistoryObservation(
     /** Identificador de la fila en la base de datos de ICdetector (`RowId` = `history.id`). */
     val rowId: Long? = null,
     /** Identificador de la lectura: dos filas de la misma lectura lo comparten (`ObservationId`). */
-    val observationId: String? = null
+    val observationId: String? = null,
+    // ── ICdetector 3.1.0: churn de celdas de H17, en sombra (docs/churn.md). Null en filas anteriores a 3.1.0. ──
+    /** Identidades completas distintas que sirvieron en los 15 min anteriores (`ChurnCells15m`). */
+    val churnCells15m: Int? = null,
+    /** Cambios de servidora en esos 15 min (`ChurnChanges15m`). */
+    val churnChanges15m: Int? = null,
+    /** `STILL`, `MOVING` o `UNKNOWN` (`ChurnMotion`). */
+    val churnMotion: String? = null
 ) {
+    /**
+     * ICdetector 3.1.0 o posterior grabó la fila: ya no hay verificación externa (OpenCellID), así que `Verified`
+     * vale siempre `PENDING` sin estar pendiente de nada, y `ApiLat`/`ApiLon` están vacías.
+     */
+    val externalVerificationRetired: Boolean get() = com.alexisgordr.cellcase.core.importing.IcdVersion.atLeast(appVersion, 3, 1, 0)
     fun stateOf(column: String): ValueState = states[column] ?: ValueState.PRESENT
 
     /** Clasificación del texto `FailedHeuristics` producido por ICdetector (resultado del colector). */

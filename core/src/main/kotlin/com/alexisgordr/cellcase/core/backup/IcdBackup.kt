@@ -37,8 +37,11 @@ object IcdBackupFormat {
     const val MANIFEST = "manifest.json"
     const val DATABASE = "icdetector_history.db"
     const val SETTINGS = "settings.json"
-    /** Esquema de la base de ICdetector 3.0.0. Las betas de 3.0 escribían del 20 al 24. */
-    const val SCHEMA = 25
+    /** Esquema más reciente que CellCase conoce: el de ICdetector 3.1.0 (3.0.0 escribe el 25). */
+    const val SCHEMA = 26
+    /** Esquemas que se leen: 25 (3.0.0) y 26 (3.1.0, añade el churn de H17 al historial). */
+    val SUPPORTED_SCHEMAS: Set<Int> = setOf(25, 26)
+    /** Las betas de 3.0 escribían del 20 al 24: no se leen. */
     const val FIRST_SCHEMA = 20
     /** Versión del lector de copias. Se guarda con la importación, como la de los demás lectores. */
     const val READER_VERSION = "backup-icd/1.0.0"
@@ -150,7 +153,7 @@ object IcdBackupReader {
             val schema = info.schemaVersion ?: return fail(ImportState.INCOMPATIBLE, msg("import.backup.manifest_unreadable", "schemaVersion"), info = info)
             when {
                 schema > IcdBackupFormat.SCHEMA -> return fail(ImportState.INCOMPATIBLE, msg("import.backup.schema_newer", schema), info = info)
-                schema in IcdBackupFormat.FIRST_SCHEMA until IcdBackupFormat.SCHEMA -> return fail(ImportState.INCOMPATIBLE, msg("import.backup.schema_beta", schema), info = info)
+                schema !in IcdBackupFormat.SUPPORTED_SCHEMAS && schema >= IcdBackupFormat.FIRST_SCHEMA -> return fail(ImportState.INCOMPATIBLE, msg("import.backup.schema_beta", schema), info = info)
                 schema < IcdBackupFormat.FIRST_SCHEMA -> return fail(ImportState.INCOMPATIBLE, msg("import.backup.schema_older", schema), info = info)
             }
             val settingsKeys = try { text(IcdBackupFormat.SETTINGS)?.let { AndroidJson.obj(String(it, Charsets.UTF_8)).keys.toList() } } catch (_: Exception) { null }
