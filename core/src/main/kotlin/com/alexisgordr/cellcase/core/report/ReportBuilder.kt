@@ -40,6 +40,8 @@ interface ReportTexts {
     fun crossSources(ctx: TextContext, a: CaseAnalysis): List<Block>
     /** Perfil local de ICdetector 3.0 (docs/local-profile.md): contexto en sombra. Vacío si el historial no lo trae. */
     fun localProfile(ctx: TextContext, a: CaseAnalysis): List<Block>
+    /** Cambio de celdas de H17 (ICdetector 3.1.0, en sombra). Solo en el informe técnico. */
+    fun churn(ctx: TextContext, a: CaseAnalysis): List<Block>
     fun sourcesAndQuality(ctx: TextContext, a: CaseAnalysis, availability: List<AnalysisAvailability>): List<Block>
     fun methodology(ctx: TextContext, a: CaseAnalysis): List<Block>
     fun conclusions(ctx: TextContext, a: CaseAnalysis, availability: List<AnalysisAvailability>): List<Block>
@@ -63,6 +65,7 @@ class ReportBuilder(private val texts: ReportTexts) {
             sections += texts.networkContext(ctx, a)
             sections += texts.crossSources(ctx, a)
             sections += texts.localProfile(ctx, a)
+            sections += texts.churn(ctx, a)
             sections += texts.sourcesAndQuality(ctx, a, availability)
             sections += texts.methodology(ctx, a)
             sections += texts.conclusions(ctx, a, availability)

@@ -1396,7 +1396,8 @@ open class ReportTextsImpl(final override val language: Language) : ReportTexts 
             t("report.methodology.contexto_el_resto_los_estados"),
             t("report.methodology.versiones_cambios_en_docs_episode", READERS_VERSION, RULESET_VERSION, EPISODE_RULES_VERSION, CROSS_RULES_VERSION) +
                 (if (ctx.results.any { it.kind == ExportKind.BACKUP }) " " + t("report.methodology.backup_version", com.alexisgordr.cellcase.core.backup.IcdBackupFormat.READER_VERSION) else "") +
-                (if (a.localProfile != null) " " + t("report.methodology.profile_version", PROFILE_RULES_VERSION) else "")
+                (if (a.localProfile != null) " " + t("report.methodology.profile_version", PROFILE_RULES_VERSION) else "") +
+                (if (a.churn != null) " " + t("report.methodology.churn_version", com.alexisgordr.cellcase.core.analysis.CHURN_RULES_VERSION) else "")
         ), TextStyle.SMALL)
     )
 
@@ -1736,6 +1737,30 @@ open class ReportTextsImpl(final override val language: Language) : ReportTexts 
     } ?: "—"
     private fun fixed2(x: Double) = String.format(es, "%.2f", x)
 
+    override fun churn(ctx: TextContext, a: CaseAnalysis): List<Block> {
+        val c = a.churn ?: return emptyList()
+        val out = ArrayList<Block>()
+        out += Block.Heading(1, t("churn.title"))
+        out += Block.Paragraph(t("rule.H17.what"))
+        out += Block.Paragraph(t("rule.H17.meaning"), TextStyle.EMPHASIS)
+        val kv = ArrayList<Pair<String, String>>()
+        kv += t("churn.k.rows") to t("churn.v.rows", int(c.rowsWithChurn.toLong()), int(c.rowsV31.toLong()), int((a.history?.import?.observations?.size ?: 0).toLong()))
+        if (c.first != null) kv += t("profile.k.period") to "${short(ctx, c.first)} – ${short(ctx, c.last ?: c.first)}"
+        out += Block.KeyValues(kv)
+        out += Block.Table(
+            listOf(Column(t("churn.col.motion"), 1.6f), Column(t("report.label.filas"), 0.9f, Align.RIGHT), Column(t("churn.col.cells"), 2.6f), Column(t("churn.col.changes"), 2.6f)),
+            c.byMotion.map { s -> listOf(t("churn.motion.${s.motion}"), int(s.rows.toLong()), "${s.cellsMedian} · ${s.cellsP90} · ${s.cellsMax}", "${s.changesMedian} · ${s.changesP90} · ${s.changesMax}") },
+            t("churn.caption_stats", com.alexisgordr.cellcase.core.analysis.CHURN_RULES_VERSION))
+        if (c.bands.isEmpty()) out += Block.Paragraph(t("churn.bands_none"), TextStyle.SMALL)
+        else out += Block.Table(
+            listOf(Column(t("churn.col.band"), 2.8f), Column(t("report.label.filas"), 0.8f, Align.RIGHT), Column(t("churn.col.peak"), 1.6f), Column(t("churn.col.motion"), 1.6f), Column(t("churn.col.ref"), 2.6f)),
+            c.bands.map { b -> listOf("${short(ctx, b.start)} – ${short(ctx, b.end)}", int(b.rows.toLong()), t("churn.v.peak", b.peakChanges, b.peakCells),
+                b.motions.joinToString(", ") { t("churn.motion.$it") }, ref(b.peak)) },
+            t("churn.caption_bands", c.changesP90))
+        out += Block.Paragraph(t("churn.limits"), TextStyle.SMALL)
+        return out
+    }
+
     override fun localProfile(ctx: TextContext, a: CaseAnalysis): List<Block> {
         val p = a.localProfile ?: return emptyList()
         val out = ArrayList<Block>()
@@ -1847,6 +1872,7 @@ open class ReportTextsImpl(final override val language: Language) : ReportTexts 
             listOf(Column(t("noteval.col.rule"), 2.4f), Column(t("noteval.col.reason"), 3.6f), Column(t("noteval.col.kind"), 2f), Column(t("report.label.filas"), 0.9f, Align.RIGHT)),
             c.byRule.map { r -> listOf(r.abstention.rule + " " + ruleName(r.abstention.rule), abstentionReason(r.abstention), t("noteval.kind." + r.abstention.kind.name), int(r.rows.toLong())) },
             t("noteval.caption"))
+        if (c.of(com.alexisgordr.cellcase.core.analysis.AbstentionKind.RETIRED).isNotEmpty()) out += Block.Paragraph(t("rule.H12.retired"), TextStyle.SMALL)
         return out
     }
 

@@ -48,7 +48,9 @@ data class CaseAnalysis(
     /** Agregados con varias exportaciones sin orden demostrable y contenido distinto: no se usa ninguna (cross/2). */
     val aggregateConflicts: List<AggregateConflict> = emptyList(),
     /** Perfil local de ICdetector 3.0 (contexto en sombra; no interviene en la valoración, D-055). Null antes de 3.0. */
-    val localProfile: LocalProfileSummary? = null
+    val localProfile: LocalProfileSummary? = null,
+    /** Cambio de celdas de H17 (ICdetector 3.1.0, en sombra): solo descriptivo, no interviene en la valoración. */
+    val churn: ChurnSummary? = null
 ) {
     fun imported(kind: ExportKind) = results.filter { it.imported && it.kind == kind }
 }
@@ -133,7 +135,8 @@ object CaseAnalyzer {
         ))
         val backups = input.mapNotNull { (it.data as? ImportedData.Backup)?.info }
         val profile = LocalProfileAnalyzer.of(merged, episodes, backups)
-        return CaseAnalysis(results, merged, ha, events, evDup, coherence, cases, reexports, topo, geo, ss, episodes, assessment, conflicts, versions, cross, aggregateConflicts, profile)
+        val churn = merged?.import?.observations?.let { ChurnAnalyzer.of(it) }
+        return CaseAnalysis(results, merged, ha, events, evDup, coherence, cases, reexports, topo, geo, ss, episodes, assessment, conflicts, versions, cross, aggregateConflicts, profile, churn)
     }
 
     private fun serviceCoherence(rows: List<HistoryObservation>, events: List<ServiceStateEvent>): ServiceCoherence {
