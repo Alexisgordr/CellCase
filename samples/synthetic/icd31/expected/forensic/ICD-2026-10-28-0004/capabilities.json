@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "observations": [
+    {
+      "timestamp": "2026-10-28T15:12:00Z",
+      "values": {
+        "timingAdvance": true,
+        "rsrq": true,
+        "sinr": true,
+        "arfcn": true,
+        "gps": true,
+        "hardwareCiphering": false
+      }
+    },
+    {
+      "timestamp": "2026-10-28T15:12:30Z",
+      "values": {
+        "timingAdvance": true,
+        "rsrq": true,
+        "sinr": true,
+        "arfcn": true,
+        "gps": true,
+        "hardwareCiphering": false
+      }
+    },
+    {
+      "timestamp": "2026-10-28T15:13:00Z",
+      "values": {
+        "timingAdvance": true,
+        "rsrq": true,
+        "sinr": true,
+        "arfcn": true,
+        "gps": true,
+        "hardwareCiphering": false
+      }
+    },
+    {
+      "timestamp": "2026-10-28T15:13:30Z",
+      "values": {
+        "timingAdvance": true,
+        "rsrq": true,
+        "sinr": true,
+        "arfcn": true,
+        "gps": true,
+        "hardwareCiphering": false
+      }
+    }
+  ]
+}

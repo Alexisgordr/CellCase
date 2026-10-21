@@ -1,0 +1,7 @@
+trip_id,started_at_utc,ended_at_utc,state,close_reason,had_moving,distinct_cells,edge_count
+"trip-05-e7e2e607","2026-10-24T08:05:00Z","","OPEN","","true","4","4"
+"trip-04-0e9bac31","2026-10-23T07:52:00Z","2026-10-23T08:33:00Z","CLOSED","STATIC_CONFIRMED","true","2","3"
+"trip-03-edc10021","2026-10-22T07:39:00Z","2026-10-22T08:20:00Z","CLOSED","ABANDONED","false","1","0"
+"trip-02-a8c58dac","2026-10-21T07:26:00Z","2026-10-21T08:07:00Z","CLOSED","STATIC_CONFIRMED","true","3","3"
+"trip-01-6db1bc28","2026-10-20T07:13:00Z","2026-10-20T07:54:00Z","CLOSED","STATIC_CONFIRMED","true","4","3"
+"trip-00-4d4417ea","2026-10-19T07:00:00Z","2026-10-19T07:41:00Z","CLOSED","STATIC_CONFIRMED","true","3","3"

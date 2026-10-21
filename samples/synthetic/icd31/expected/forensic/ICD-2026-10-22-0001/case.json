@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "caseId": "ICD-2026-10-22-0001",
+  "state": "READY",
+  "createdAt": "2026-10-22 16:48:53",
+  "captureOrigin": "ALARM",
+  "updatedAt": "2026-10-22 16:53:53",
+  "closedAt": "2026-10-22 16:54:53",
+  "cellIdentity": "001-01-3001-1000070-LTE",
+  "highestPhase": 3,
+  "confirmed": true,
+  "sampleCount": 5,
+  "appVersion": "3.1.0+90627b7",
+  "appVersionCode": 40,
+  "device": "SYNTHETIC Phone 3",
+  "android": "16",
+  "sampleSchemaVersion": 1,
+  "integrityNote": "SHA-256 detects later modification; it is not a legal chain-of-custody signature."
+}

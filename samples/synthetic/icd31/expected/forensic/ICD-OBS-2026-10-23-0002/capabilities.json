@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "observations": [
+    {
+      "timestamp": "2026-10-23T11:53:44Z",
+      "values": {
+        "timingAdvance": true,
+        "rsrq": true,
+        "sinr": true,
+        "arfcn": true,
+        "gps": true,
+        "hardwareCiphering": false
+      }
+    },
+    {
+      "timestamp": "2026-10-23T11:54:14Z",
+      "values": {
+        "timingAdvance": true,
+        "rsrq": true,
+        "sinr": true,
+        "arfcn": true,
+        "gps": true,
+        "hardwareCiphering": false
+      }
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "caseId": "ICD-2026-10-26-0003",
+  "state": "CAPTURING",
+  "createdAt": "2026-10-26 12:29:05",
+  "captureOrigin": "ALARM",
+  "updatedAt": "2026-10-26 12:29:05",
+  "closedAt": null,
+  "cellIdentity": "001-01-3001-1000980-LTE",
+  "highestPhase": 1,
+  "confirmed": false,
+  "sampleCount": 0,
+  "appVersion": "3.1.0+90627b7",
+  "appVersionCode": 40,
+  "device": "unknown",
+  "android": "unknown",
+  "sampleSchemaVersion": 0,
+  "integrityNote": "SHA-256 detects later modification; it is not a legal chain-of-custody signature."
+}

@@ -1,0 +1,11 @@
+timestamp_utc,heuristic_id,name,status,explanation
+"2026-10-22T14:48:53.310Z","3","Potencia","FAILED","'+19 dB sobre la referencia, ""sin"" contexto"
+"2026-10-22T14:48:53.310Z","9","Latencia","NOT_EVALUATED","Sin datos móviles"
+"2026-10-22T14:49:23.310Z","3","Potencia","FAILED","'+19 dB sobre la referencia, ""sin"" contexto"
+"2026-10-22T14:49:23.310Z","9","Latencia","NOT_EVALUATED","Sin datos móviles"
+"2026-10-22T14:49:53.310Z","3","Potencia","FAILED","'+19 dB sobre la referencia, ""sin"" contexto"
+"2026-10-22T14:49:53.310Z","9","Latencia","NOT_EVALUATED","Sin datos móviles"
+"2026-10-22T14:50:23.310Z","3","Potencia","FAILED","'+19 dB sobre la referencia, ""sin"" contexto"
+"2026-10-22T14:50:23.310Z","9","Latencia","NOT_EVALUATED","Sin datos móviles"
+"2026-10-22T14:50:53.310Z","3","Potencia","FAILED","'+19 dB sobre la referencia, ""sin"" contexto"
+"2026-10-22T14:50:53.310Z","9","Latencia","NOT_EVALUATED","Sin datos móviles"

@@ -1,0 +1,5 @@
+timestamp_utc,local_trust_state,local_trust_confidence_percent,local_trust_contradictions,site_key,site_feature_state,site_novelty,site_would_trigger,site_enforced,site_reason,site_static_duration_s,site_location_accuracy_m,site_serving_days,site_neighbour_days
+"2026-10-28T15:12:00Z","CONTRADICTED","62","SIGNAL_JUMP;PCI_FLAP","a1b2c3d4e5f60718293a","SHADOW_READY","KNOWN_CELL","false","false","NOT_NOVEL","420","12.5","6","2"
+"2026-10-28T15:12:30Z","CONTRADICTED","62","SIGNAL_JUMP;PCI_FLAP","a1b2c3d4e5f60718293a","SHADOW_READY","KNOWN_CELL","false","false","NOT_NOVEL","420","12.5","6","2"
+"2026-10-28T15:13:00Z","CONTRADICTED","62","SIGNAL_JUMP;PCI_FLAP","a1b2c3d4e5f60718293a","SHADOW_READY","KNOWN_CELL","false","false","NOT_NOVEL","420","12.5","6","2"
+"2026-10-28T15:13:30Z","CONTRADICTED","62","SIGNAL_JUMP;PCI_FLAP","a1b2c3d4e5f60718293a","SHADOW_READY","KNOWN_CELL","false","false","NOT_NOVEL","420","12.5","6","2"

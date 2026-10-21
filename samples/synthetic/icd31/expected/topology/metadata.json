@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "generatedAtUtc": "2026-10-29T18:40:11.500Z",
+  "appVersion": "3.1.0+90627b7",
+  "appVersionCode": 40,
+  "directedGraph": true,
+  "cellCount": 9,
+  "routeCount": 36,
+  "handoverCount": 232,
+  "privacyNote": "Cell identities and handover routes can reveal habitual movement patterns.",
+  "integrityNote": "SHA-256 detects later modification; it is not a legal chain-of-custody signature."
+}

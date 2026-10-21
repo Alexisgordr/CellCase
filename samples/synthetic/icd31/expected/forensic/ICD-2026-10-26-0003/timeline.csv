@@ -1,0 +1,1 @@
+timestamp_utc,elapsed_ms,event,phase,score,anomaly_confidence,cell_identity,verified,latency_state,gps_lat,gps_lon,gps_accuracy_m,reason,required_phases,data_quality_reason,heuristics

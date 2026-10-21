@@ -1,0 +1,9 @@
+timestamp_utc,heuristic_id,name,status,explanation
+"2026-10-28T15:12:00Z","14","Banda","FAILED","B7→B8 sin cambio de estación base"
+"2026-10-28T15:12:00Z","12","Latencia + RF","NOT_EVALUATED","regla retirada en 3.1.0"
+"2026-10-28T15:12:30Z","14","Banda","FAILED","B7→B8 sin cambio de estación base"
+"2026-10-28T15:12:30Z","12","Latencia + RF","NOT_EVALUATED","regla retirada en 3.1.0"
+"2026-10-28T15:13:00Z","14","Banda","FAILED","B7→B8 sin cambio de estación base"
+"2026-10-28T15:13:00Z","12","Latencia + RF","NOT_EVALUATED","regla retirada en 3.1.0"
+"2026-10-28T15:13:30Z","14","Banda","FAILED","B7→B8 sin cambio de estación base"
+"2026-10-28T15:13:30Z","12","Latencia + RF","NOT_EVALUATED","regla retirada en 3.1.0"
