@@ -1745,7 +1745,7 @@ open class ReportTextsImpl(final override val language: Language) : ReportTexts 
         out += Block.Paragraph(t("rule.H17.meaning"), TextStyle.EMPHASIS)
         val kv = ArrayList<Pair<String, String>>()
         kv += t("churn.k.rows") to t("churn.v.rows", int(c.rowsWithChurn.toLong()), int(c.rowsV31.toLong()), int((a.history?.import?.observations?.size ?: 0).toLong()))
-        if (c.first != null) kv += t("profile.k.period") to "${short(ctx, c.first)} – ${short(ctx, c.last ?: c.first)}"
+        if (c.first != null) kv += t("churn.k.period") to "${short(ctx, c.first)} – ${short(ctx, c.last ?: c.first)}"
         out += Block.KeyValues(kv)
         out += Block.Table(
             listOf(Column(t("churn.col.motion"), 1.6f), Column(t("report.label.filas"), 0.9f, Align.RIGHT), Column(t("churn.col.cells"), 2.6f), Column(t("churn.col.changes"), 2.6f)),

@@ -43,13 +43,15 @@ object GenerateSampleReport {
 
     /** Copia de seguridad SINTÉTICA de ICdetector 3.0.0 (tools/synth/generate_icd30.py): historial con perfil local y hora UTC. */
     val BACKUP30 = listOf("icd30/SYNTHETIC_icd30_fresh.icdbackup")
+    /** Copia de esquema 26 (ICdetector 3.1.0) con filas de 2.10.x, 3.0.0 y 3.1.0: churn de H17 y corte de dataset. */
+    val BACKUP31 = listOf("icd31/SYNTHETIC_icd31.icdbackup")
 
     @JvmStatic
     fun main(args: Array<String>) {
         val out = File(args.getOrElse(0) { "samples/reports/SYNTHETIC_informe_expediente.pdf" })
         val flags = args.drop(1).filter { it.startsWith("--") }
         val scale = args.drop(1).filter { !it.startsWith("--") } == listOf("ESCALA")
-        val names = args.drop(1).filter { !it.startsWith("--") }.let { when (it) { listOf("PATRONES"), listOf("ESCALA") -> PATTERNS; listOf("COPIA30") -> BACKUP30; else -> it } }.ifEmpty { ALL }
+        val names = args.drop(1).filter { !it.startsWith("--") }.let { when (it) { listOf("PATRONES"), listOf("ESCALA") -> PATTERNS; listOf("COPIA30") -> BACKUP30; listOf("COPIA31") -> BACKUP31; else -> it } }.ifEmpty { ALL }
         val crossAnnex = "--cross-annex" in flags
         val mode = flags.firstOrNull { it.startsWith("--mode=") }?.substringAfter("=")?.let { ReportMode.valueOf(it) } ?: ReportMode.FULL
         val masked = "--masked" in flags
@@ -64,16 +66,17 @@ object GenerateSampleReport {
         val ctx = TextContext(
             CaseInfo(
                 id = "c0a1b2c3-sint-0000-0000-000000000001",
-                name = when { scale -> "Escala sintética"; names == BACKUP30 -> "Copia sintética de ICdetector 3.0"; names == ALL -> "Demostración sintética 01"; names == PATTERNS -> "Patrones sintéticos"; else -> "Casos límite sintéticos" },
+                name = when { scale -> "Escala sintética"; names == BACKUP30 -> "Copia sintética de ICdetector 3.0"; names == BACKUP31 -> "Copia sintética de ICdetector 3.1.0"; names == ALL -> "Demostración sintética 01"; names == PATTERNS -> "Patrones sintéticos"; else -> "Casos límite sintéticos" },
                 createdAt = Instant.parse("2026-10-02T07:55:00Z"),
                 deviceLabel = "Teléfono sintético (sin dispositivo real)",
                 zone = TestSupport.MADRID,
                 origin = DataOrigin.SYNTHETIC,
                 analystNotes = if (names == ALL) "Expediente creado para comprobar el recorrido completo de CellCase con las muestras sintéticas del repositorio: " +
                     "los cinco formatos habituales, un caso forense con su reexportación, un archivo repetido y un ZIP dañado."
-                    else if (names == PATTERNS || names == BACKUP30) null else "Expediente de prueba con: ${names.joinToString()}.",
+                    else if (names == PATTERNS || names == BACKUP30 || names == BACKUP31) null else "Expediente de prueba con: ${names.joinToString()}.",
                 description = if (names == PATTERNS) "Reproduce la forma de los patrones de un expediente real, con datos inventados"
-                    else if (names == BACKUP30) "Una sola copia de seguridad de ICdetector 3.0.0, con datos inventados" else null,
+                    else if (names == BACKUP30) "Una sola copia de seguridad de ICdetector 3.0.0, con datos inventados"
+                    else if (names == BACKUP31) "Una copia de ICdetector 3.1.0 de un teléfono que venía de 3.0.0, con datos inventados" else null,
                 periodOfInterest = null
             ),
             results,

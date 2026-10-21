@@ -44,5 +44,9 @@ GEN "$ROOT/samples/reports/SYNTHETIC_copia30_explicado.pdf" COPIA30 --mode=EXPLA
 GEN "$ROOT/samples/reports/SYNTHETIC_copia30_completo.pdf" COPIA30 --mode=FULL --coords=ROUND_3
 GEN "$ROOT/samples/reports/SYNTHETIC_backup30_plain_en.pdf" COPIA30 --mode=EXPLAINED --coords=ROUND_3 --lang=en
 GEN "$ROOT/samples/reports/SYNTHETIC_backup30_full_en.pdf" COPIA30 --mode=FULL --coords=ROUND_3 --lang=en
+GEN "$ROOT/samples/reports/SYNTHETIC_copia31_explicado.pdf" COPIA31 --mode=EXPLAINED --coords=ROUND_3
+GEN "$ROOT/samples/reports/SYNTHETIC_copia31_completo.pdf" COPIA31 --mode=FULL --coords=ROUND_3
+GEN "$ROOT/samples/reports/SYNTHETIC_backup31_plain_en.pdf" COPIA31 --mode=EXPLAINED --coords=ROUND_3 --lang=en
+GEN "$ROOT/samples/reports/SYNTHETIC_backup31_full_en.pdf" COPIA31 --mode=FULL --coords=ROUND_3 --lang=en
 GEN "$ROOT/samples/reports/SYNTHETIC_informe_expediente.pdf" --mode=FULL
 GEN "$ROOT/samples/reports/SYNTHETIC_informe_casos_limite.pdf" SYNTHETIC_icdetector_history_edge_cases.csv --masked --coords=ROUND_3 --mode=EXPLAINED

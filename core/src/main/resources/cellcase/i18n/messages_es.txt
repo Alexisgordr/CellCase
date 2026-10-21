@@ -1261,6 +1261,7 @@ rule.H17.meaning = Qué significa en ICdetector 3.1.0: modo sombra. Se registra,
 rule.H12.retired = H12 (latencia + RF) se retiró en ICdetector 3.1.0 junto con la sonda de latencia: H12(retirada) aparece en todas las filas de la 3.1.0 y no es una abstención por falta de datos.
 churn.title = Cambio de celdas (H17, modo sombra, sin calibrar)
 churn.k.rows = Filas con cambio de celdas
+churn.k.period = Periodo con cambio de celdas
 churn.v.rows = {0} (filas de ICdetector 3.1.0 o posterior: {1}; filas del historial: {2})
 churn.col.motion = Movimiento
 churn.col.cells = Celdas en 15 min (mediana · P90 · máx.)

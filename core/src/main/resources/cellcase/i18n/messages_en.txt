@@ -1261,6 +1261,7 @@ rule.H17.meaning = What it means in ICdetector 3.1.0: shadow mode. It is recorde
 rule.H12.retired = H12 (latency + RF) was removed in ICdetector 3.1.0 together with the latency probe: H12(retirada) appears in every 3.1.0 row and is not an abstention for lack of data.
 churn.title = Cell churn (H17, shadow mode, not calibrated)
 churn.k.rows = Rows with cell churn
+churn.k.period = Period with cell churn
 churn.v.rows = {0} (rows from ICdetector 3.1.0 or later: {1}; history rows: {2})
 churn.col.motion = Motion
 churn.col.cells = Cells in 15 min (median · P90 · max)
