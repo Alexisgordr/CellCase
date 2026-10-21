@@ -1,6 +1,10 @@
 # Catálogo de reglas de análisis
 
-Conjunto de reglas: **`cellcase-rules/1`**. Cada hallazgo del informe indica la regla y su versión.
+Conjunto de reglas: **`cellcase-rules/2`**. Cada hallazgo del informe indica la regla y su versión.
+
+Cambios de `cellcase-rules/2` (CellCase 0.2.0, D-057, para ICdetector 3.1.0): `COL-RESULTS/2` (verificación externa
+retirada), `COL-RULES/1` (reglas no evaluadas) y `QUAL-CUT/1` (corte de dataset) son nuevas o cambian; el resto de
+reglas siguen en la versión 1. Las reglas de episodios (`episodes/6`) no cambian.
 
 Principios (D-016, D-021, requisitos de fase 5):
 
@@ -109,18 +113,56 @@ para descartar valores imposibles, no límites normativos.
 - **No evaluable:** sin filas con TA.
 - **No permite concluir:** distancias reales a la antena (TA cuantizado, unidad dudosa en NR).
 
-## COL-RESULTS/1 · Resultados del colector (ICdetector)
+## COL-RESULTS/2 · Resultados del colector (ICdetector)
 
 - **Pregunta:** ¿qué registró ICdetector sobre sus propias heurísticas?
 - **Datos:** `SecurityScore`, `FailedHeuristics`, `AnomalyConfidence`, `Verified`.
 - **Calcula:** recuentos por clase de `FailedHeuristics` (`OK`, prefijo `[sub-umbral]`, motivo sin
-  prefijo), puntuaciones < 100, máximo de `AnomalyConfidence`, reparto de `Verified`.
+  prefijo), puntuaciones < 100, máximo de `AnomalyConfidence`, reparto de `Verified` **solo en las filas que tenían
+  verificación externa**.
+- **Verificación retirada (/2):** ICdetector 3.1.0 quitó la consulta a OpenCellID. Sus filas llevan siempre
+  `Verified` = `PENDING` y `ApiLat`/`ApiLon` vacías, sin nada pendiente. Las filas con `AppVersion` 3.1.0 o
+  posterior se cuentan aparte como «sin verificación externa (retirada)», en el anexo del historial y en las
+  limitaciones, y no se comparan con otras fuentes (`cross/3`). Con un historial mixto, el informe lo explica en
+  una frase. Las filas sin `AppVersion` (2.10.x) se tratan como antes.
 - **Evidencia:** filas con motivo sin prefijo y con `[sub-umbral]`.
 - **Alternativas:** las heurísticas de ICdetector no están calibradas; sus motivos son resultados de
   reglas propias del colector y pueden dispararse por condiciones de red normales.
 - **No evaluable:** sin columnas del colector.
 - **No permite concluir:** que exista un IMSI catcher, interceptación o vigilancia; `AnomalyConfidence`
   no es una probabilidad.
+
+## COL-RULES/1 · Reglas que ICdetector no evaluó
+
+- **Pregunta:** ¿qué reglas de ICdetector no se pudieron evaluar en cada fila, y por qué?
+- **Datos:** `NotEvaluatedHeuristics` (3.0 o posterior): `Hn` o `Hn(motivo)` separados por `;`, o `NONE`.
+- **Calcula:** filas con el campo; filas con al menos una regla sin evaluar **por falta de datos o de contexto**;
+  por regla y motivo, número de filas y una fila de ejemplo (archivo y línea). Las partes que no siguen el formato
+  se cuentan como ilegibles y se conservan.
+- **Clases** (`NotEvaluated.kt`):
+  - *Falta de datos o de contexto*: todos los motivos de 3.0 (`csg`, `roaming`, `frontera`, `sin_sim`,
+    `sin_servicestate`, `sin_mcc_servidora`, `fix_viejo`), los de 3.1.0 `H6(ta_gsm)`, `H6(ta_stub)`,
+    `H6(ta_sin_verificar)` y `H11(fix_impreciso)`, y una regla sin motivo. Un `H12` sin motivo de una fila de 3.0
+    es una abstención real (por ejemplo, sin medida de latencia) y se trata como antes.
+  - *Retirada*: `H12(retirada)`, en todas las filas de 3.1.0 (se quitó la sonda de latencia).
+  - *En sombra*: `H17(sombra)`, en todas las filas de 3.1.0 (el cambio de celdas se registra, no se evalúa;
+    docs/churn.md).
+  - *Reservada*: `H9` (cifrado), siempre sin evaluar desde 3.0 porque Android no lo expone.
+  Las tres últimas **no** son abstenciones por falta de datos y no cuentan como problema de calidad.
+- **Presentación:** informe técnico, «Fuentes y calidad»: una frase, una tabla con el nombre de cada regla (H12
+  marcada como retirada desde 3.1.0, H17 incluida) y el texto de cada motivo en el idioma del informe.
+- **No permite concluir:** nada sobre la red; describe qué evaluó el colector.
+
+## QUAL-CUT/1 · Corte de dataset de ICdetector 3.1.0
+
+- **Pregunta:** ¿mezcla el historial filas de antes y de después de ICdetector 3.1.0?
+- **Datos:** `AppVersion` de cada fila (las filas sin versión, de 2.10.x, cuentan como anteriores).
+- **Calcula:** filas anteriores (y la última hora) y filas de 3.1.0 o posterior (y la primera hora).
+- **Presentación:** si hay de los dos tramos, una nota en el informe técnico que nombra los campos no comparables
+  entre tramos: `H6`, `TAUnit`, `H11`, `H12`, `H14`, `SecurityScore`, `AnomalyConfidence` y la confianza local de
+  celda (y con ella las alarmas), según las marcas «Dataset cut» del CHANGELOG de ICdetector 3.1.0.
+- **No cambia:** CellCase no recalcula nada ni corrige valores; las prioridades de los episodios no cambian.
+- **No permite concluir:** que un cambio de esos campos entre tramos se deba a la red.
 
 ## COH-DUP/1 · Duplicados y posibles revisiones
 

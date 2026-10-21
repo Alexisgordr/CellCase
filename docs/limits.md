@@ -1,4 +1,4 @@
-# Límites de importación y memoria (`readers/2.3.0`, D-041, D-046, D-054)
+# Límites de importación y memoria (`readers/2.4.0`, D-041, D-046, D-054)
 
 CellCase procesa los archivos en el teléfono, sin servidor. Los límites rechazan lo que no cabe **antes de
 acumularlo**; no se captura `OutOfMemoryError` en ningún punto.
@@ -62,6 +62,10 @@ conjunto y los dos informes en los dos idiomas. Medido el 20/10/2026 con `reader
 
 Medición anterior (`readers/2.2.0`, presupuesto de 6 MiB, 37.000 filas de 2.10.5): 70 MiB retenidos al final con
 128 MiB. Con 3.0 el margen hasta 128 MiB es menor (34 MiB); por eso no se sube más el presupuesto sin medir en Android.
+
+`readers/2.4.0` (ICdetector 3.1.0) no cambia ningún límite. El historial de 3.1.0 añade tres columnas cortas
+(`ChurnCells15m`, `ChurnChanges15m`, `ChurnMotion`: unos 12 bytes por fila en el CSV y tres campos más por fila
+leída). **No se ha vuelto a medir** con un historial de 3.1.0; la medición de esta tabla es la de 3.0.
 
 El «pico de montón» que imprime la sonda suma los picos de cada zona del recolector y no son simultáneos; lo
 relevante es que el recorrido completo termina con 128 MiB. Con los límites de antes de D-046 (16 MiB por archivo y

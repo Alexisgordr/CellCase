@@ -244,6 +244,40 @@ hora tiene zona. Las filas grabadas antes de actualizar a 3.0 llevan las columna
 formas de ancho completo), `'` o un carácter de control, salvo los números. CellCase lo quita solo si el resto,
 protegido de nuevo, da exactamente el campo leído (`CsvGuard.unguard`), y lo anota (TEXT_GUARD_REMOVED).
 
+
+### 1.9 ICdetector 3.1.0 (57 columnas; D-057)
+
+Fuente: `utils/ExportUtils.kt`, `storage/CellDbHelper.kt` (`SchemaV26`), `docs/history-csv-columns.md` y
+`CHANGELOG.md` de `v3.1.0` (`versionCode` 40, `BUILD_COMMIT` `90627b7`; `AppVersion` = `3.1.0+90627b7`). Las 54
+columnas de 3.0 no cambian de nombre ni de orden; se añaden 3 al final:
+
+| Columna | Contenido | En CellCase |
+|---|---|---|
+| `ChurnCells15m` | Identidades de celda distintas que han servido al teléfono en los 15 min anteriores (H17) | Entero ≥ 0; vacío = sin dato |
+| `ChurnChanges15m` | Cambios de servidora en esos 15 min | Entero ≥ 0; vacío = sin dato |
+| `ChurnMotion` | Movimiento del teléfono: `STILL`, `MOVING` o `UNKNOWN` (sin fix GPS de 60 s o menos) | Uno de los tres; vacío = sin dato |
+
+La cuenta se reinicia tras una pérdida de servicio o un hueco de más de 2 minutos. Un valor no válido (negativo, no
+entero o un movimiento desconocido) es un **aviso con su procedencia**, no un rechazo del archivo (`history-csv/1.2.0`).
+Un historial con solo una o dos de las tres columnas es un 3.x parcial, con aviso. Las filas grabadas antes de
+actualizar a 3.1.0 llevan las tres vacías.
+
+Cambios de **significado** en columnas que ya existían (sin cambiar el formato):
+
+- `Verified`, `ApiLat`, `ApiLon`: la verificación externa (OpenCellID) se retiró en 3.1.0. Las filas nuevas llevan
+  siempre `PENDING` y coordenadas vacías: **no hay nada pendiente**. CellCase clasifica las filas con `AppVersion`
+  3.1.0 o posterior como «sin verificación externa (retirada)» y no las cuenta como pendientes ni las compara con
+  otras fuentes (`cellcase-rules/2`, `cross/3`).
+- `NotEvaluatedHeuristics`: formato `Hn` o `Hn(motivo)` separados por `;`, o `NONE`. Motivos nuevos de 3.1.0:
+  `H12(retirada)` (en todas las filas: la regla de latencia + RF se retiró), `H17(sombra)` (en todas las filas: el
+  cambio de celdas se registra pero no se evalúa), `H6(ta_gsm)`, `H6(ta_stub)`, `H6(ta_sin_verificar)` y
+  `H11(fix_impreciso)`. Los dos primeros **no son abstenciones por falta de datos**; un `H12` sin motivo de una fila
+  de 3.0 sí lo es (docs/analysis-rules.md, COL-RULES/1).
+- **Cortes de dataset** (CHANGELOG 3.1.0): `H6`, `TAUnit`, `H11`, `H12`, `H14`, `SecurityScore`,
+  `AnomalyConfidence` y la confianza local de celda (y con ella las alarmas) se calculan de otra forma desde 3.1.0.
+  Un historial con filas de antes y de después no es comparable en esos campos; el informe técnico lo dice
+  (QUAL-CUT/1).
+
 ---
 
 ## 2. Radio: eventos de estado de servicio (CSV)
@@ -635,6 +669,15 @@ columnas de capacidad (v2.10.0+, esquema 18).
 - **Stable-Site**: entrada `PRIVACY.txt` (nota de privacidad), que CellCase trata como contexto.
 - **Topología y Geometría**: sin límite de rutas desde 2.10.6; el aviso de rutas truncadas solo se da antes.
 - **Copia de seguridad `.icdbackup`**: nueva; docs/backup-format.md.
+
+## 8c. Otros cambios de ICdetector 3.1.0 (D-057)
+
+- **Radio, Topología, Geometría y Stable-Site**: sin cambios de formato.
+- **Caso forense**: mismo formato. `payload_json` ya no lleva `latencyState` y la columna `latency_state` de
+  `timeline.csv` queda vacía en las muestras nuevas (se retiró la sonda de latencia); `verified` es `PENDING`.
+  CellCase lo importa igual y el informe no habla de latencia.
+- **Copia de seguridad `.icdbackup`**: esquema 26; docs/backup-format.md §7.
+- **Sin red**: ICdetector 3.1.0 ya no pide el permiso de Internet.
 
 ## 9. Implicaciones directas para CellCase
 

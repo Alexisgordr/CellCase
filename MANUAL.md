@@ -1,6 +1,6 @@
 # CellCase · User manual
 
-Version 0.1.0 · rules `episodes/6` · readers `readers/2.3.0`
+Version 0.2.0 · rules `cellcase-rules/2 · episodes/6 · cross/3` · readers `readers/2.4.0`
 
 This manual explains how to use CellCase, how to read what it shows and what its reports can and cannot say. For what the app is and how to build it, see the [README](README.md). For the rules in detail, see the documents under [`docs/`](docs/).
 
@@ -28,7 +28,7 @@ This manual explains how to use CellCase, how to read what it shows and what its
 CellCase does not capture anything by itself. It reads the files that [ICdetector](https://github.com/Alexisgordr/ICdetector) exports and turns them into a report. You need:
 
 - A phone with Android 8.0 or newer with CellCase installed.
-- One or more ICdetector exports, or an ICdetector 3.0.0 backup (`.icdbackup`), copied to the phone where CellCase runs (it can be the same phone or another one).
+- One or more ICdetector exports (2.10.5, 3.0 or 3.1.0), or an ICdetector 3.0.0 or 3.1.0 backup (`.icdbackup`), copied to the phone where CellCase runs (it can be the same phone or another one).
 
 CellCase asks for no permissions and never connects to the network. Everything stays on the phone until you save a PDF somewhere.
 
@@ -36,11 +36,11 @@ CellCase asks for no permissions and never connects to the network. Everything s
 
 ## 2. Getting exports out of ICdetector
 
-The simplest way, with ICdetector 3.0.0, is one file:
+The simplest way, with ICdetector 3.0.0 or 3.1.0, is one file:
 
 - **Settings → Backup** in ICdetector creates an `ICdetection-backup-<date>-<time>.icdbackup` file that contains the whole database. CellCase extracts from it the same six exports that ICdetector would produce one by one.
 
-The individual exports (ICdetector 2.10.5 or 3.0) also work, alone or combined:
+The individual exports (ICdetector 2.10.5, 3.0 or 3.1.0) also work, alone or combined:
 
 | Export | Where in ICdetector | File name |
 |---|---|---|
@@ -52,6 +52,21 @@ The individual exports (ICdetector 2.10.5 or 3.0) also work, alone or combined:
 | Stable-Site | History → Stable-Site → Export | `ICD-stable-site-<number>.zip` |
 
 CellCase recognises each file **by its content**, not by its name, so renamed files are fine. The history is the most important one: without it there are no measurements to check anything against, although the other formats are still analysed.
+
+### What changes with ICdetector 3.1.0
+
+You import 3.1.0 files exactly as before; nothing has to be converted. A phone updated from 3.0 to 3.1.0 keeps its old rows, so one history or backup can contain rows of both versions; CellCase tells them apart by each row's `AppVersion`.
+
+- **Backup.** The 3.1.0 backup uses database schema 26 (3.0.0 uses 25). Both are read. A backup from a version newer than 3.1.0 is not interpreted, and the message says why.
+- **Three new history columns** (at the end of the CSV), recorded by ICdetector's new rule **H17 Cell churn**:
+  - `ChurnCells15m`: how many distinct cell identities served the phone in the previous 15 minutes;
+  - `ChurnChanges15m`: how many serving-cell changes there were in those 15 minutes;
+  - `ChurnMotion`: whether the phone was still (`STILL`), moving (`MOVING`) or this is unknown (`UNKNOWN`).
+  The count restarts after a loss of service or a gap of more than 2 minutes. Empty means no data (rows recorded before 3.1.0 have them empty). An invalid value produces a warning that cites its file and line; the file is still imported.
+- **External verification removed.** ICdetector 3.1.0 no longer looks cells up in OpenCellID. Its rows always say `Verified = PENDING` with empty `ApiLat`/`ApiLon`, but **nothing is pending**. CellCase lists those rows as *no external verification (removed)*, does not count them as pending and does not compare them with other sources. With a mixed history, the report says so in one sentence.
+- **H12 removed, H17 in shadow mode.** In `NotEvaluatedHeuristics`, every 3.1.0 row lists `H12(retirada)` (latency + RF, removed with the latency probe) and `H17(sombra)` (cell churn, recorded but not evaluated). Neither means missing data. A bare `H12` in a 3.0 row did mean the rule could not be evaluated, and is treated as before. The other new reasons (`H6(ta_gsm)`, `H6(ta_stub)`, `H6(ta_sin_verificar)`, `H11(fix_impreciso)`) are explained in the report's language.
+- **Dataset cut.** ICdetector 3.1.0 computes H6, `TAUnit`, H11, H12, H14, `SecurityScore`, `AnomalyConfidence` and the local cell confidence differently. If a case mixes rows from before and after 3.1.0, the technical report warns that those fields are not comparable between the two stretches. Episode priorities do not change.
+- **Forensic cases** from 3.1.0 no longer carry a latency state. They import the same, and the report does not mention latency.
 
 ## 3. The case list
 
@@ -127,7 +142,7 @@ The sections appear in this order.
 
 **Agreements and differences between sources.** Totals of the cross-checks between files (X-SVC, X-CELL, X-ROUTE, X-AGG, X-SHADOW, X-FOR, X-VER…) and, under *Show details*, the ones linked to an episode. Most sources come from ICdetector itself, so an agreement checks that the files are consistent; it is not independent confirmation. These checks never change the assessment.
 
-**ICdetector local profile (shadow mode).** For histories from ICdetector 3.0: how far each reading deviated from what that phone considers normal for that cell, as ICdetector computed it. Shown as context; it changes no conclusion.
+**ICdetector local profile (shadow mode).** For histories from ICdetector 3.0 or later: how far each reading deviated from what that phone considers normal for that cell, as ICdetector computed it. Shown as context; it changes no conclusion.
 
 **History: period and quality.** Period covered, rows read and discarded, share of valid fields, gaps of 60 minutes or more, and how many rows have a unique instant in the declared zone.
 
@@ -181,19 +196,30 @@ Tap **Generate PDF**. The report is stored inside the case with its mode, langua
 4. **Chronology**: signals per source, history rows per day, Radio state changes.
 5. **Network context**: Topology (routes, handovers, a graph of the most relevant cells), Radio, Stable-Site and Geometry aggregates.
 6. **Agreements and differences between sources**: totals, one row per check type with examples, and the checks linked to episodes.
-7. **ICdetector local profile (shadow mode)**, only when the data come from ICdetector 3.0.
-8. **Sources and data quality**: every file with its state, period and counts; history quality; which analyses are not available and why.
-9. **Methodology**, 10. **Conclusion and next steps**, 11. **Limitations**, 12. **Analyst's notes**.
+7. **ICdetector local profile (shadow mode)**, only when the data come from ICdetector 3.0 or later.
+8. **Cell churn (H17, shadow mode, not calibrated)**, only when the history has 3.1.0 rows (see below).
+9. **Sources and data quality**: every file with its state, period and counts; history quality; which analyses are not available and why; the **rules ICdetector did not evaluate** (a table with each rule's name and reason, H17 included and H12 marked as removed since 3.1.0; removed, shadow-mode and reserved rules are not counted as missing data); and the **dataset cut** note when the history mixes 3.0 and 3.1.0 rows.
+10. **Methodology**, 11. **Conclusion and next steps**, 12. **Limitations**, 13. **Analyst's notes**.
 - **Annexes**: A. files, entries and integrity (SHA-256 of each file, `SHA256SUMS` results); B. validation issues per file; C. evidence references per episode; D. statistical description of the history; E. rules and thresholds; F. privacy and rounding applied; G. (optional) the full list of cross-checks.
 
-Every page carries the generation time, the CellCase version and the rule versions (`cellcase-rules/1 · episodes/6`), and a banner when the data are declared synthetic.
+Every page carries the generation time, the CellCase version and the rule versions (`cellcase-rules/2 · episodes/6`), and a banner when the data are declared synthetic.
+
+### The cell churn section (H17)
+
+**H17 Cell churn** measures how many distinct cell identities served the phone in the previous 15 minutes and how many serving-cell changes there were, together with the motion state (still, moving or unknown). The count restarts after a loss of service or a gap of more than 2 minutes.
+
+In ICdetector 3.1.0 it runs in **shadow mode**: it is recorded, it is not evaluated, it subtracts no points and it has no thresholds; ICdetector will calibrate them with field-campaign data. A high value while still is something to look at, not an alarm.
+
+The section shows how many rows have churn, a table per motion state with the median, 90th percentile (P90) and maximum of cells and changes in 15 minutes, and up to five **high-value periods**: consecutive rows (15 minutes or less apart) with at least as many changes as this case's own P90, each with the file and line of its peak row. That P90 is a reference taken from the case itself, not a threshold. Changing cells a lot while travelling is normal.
+
+Churn never changes episodes, priorities, spoofing relevance or the assessment, and it does not appear in the plain-language report. Details: [`docs/churn.md`](docs/churn.md).
 
 ### Reading the two axes
 
 Each episode is rated on **two independent axes**:
 
 - **Technical interest** (*Priority review*, *To review*, *Context*) answers "is this worth a technician's time?". Repetition of a common behaviour can raise it without raising suspicion.
-- **Spoofing relevance** (*Insufficient evidence to attribute an attack*, *Observations that need more data*) answers the report's question. A third level, *Evidence requiring specialist investigation*, exists in the rules but is **never assigned** in 0.1.0 because no criteria have been evaluated against reference data.
+- **Spoofing relevance** (*Insufficient evidence to attribute an attack*, *Observations that need more data*) answers the report's question. A third level, *Evidence requiring specialist investigation*, exists in the rules but is **never assigned** in 0.2.0 because no criteria have been evaluated against reference data.
 
 The case's status is the highest of its episodes. None of these is a probability.
 
@@ -225,7 +251,7 @@ In short (full rules in [`docs/episode-rules.md`](docs/episode-rules.md), [`docs
 
 ## 12. Limits
 
-Limits are applied **before** loading anything, so an oversized file is rejected with a message rather than exhausting memory. Values in 0.1.0 (`readers/2.3.0`; measurements in [`docs/limits.md`](docs/limits.md)):
+Limits are applied **before** loading anything, so an oversized file is rejected with a message rather than exhausting memory. Values in 0.2.0 (`readers/2.4.0`, unchanged since 0.1.0; measurements in [`docs/limits.md`](docs/limits.md)):
 
 | Limit | Value |
 |---|---|
@@ -244,7 +270,7 @@ The case budget is reserved in import order: the first files have priority, and 
 
 ## 13. Troubleshooting
 
-**"File not recognised" for a real ICdetector export.** Histories older than ICdetector 2.1 (fewer than 23 columns) are not supported, and Radio exports exist only from 2.10.4. Backups from 3.0 betas (database schema 20–24) are not interpreted. For any other export, please open an issue with the file if you can share it.
+**"File not recognised" for a real ICdetector export.** Histories older than ICdetector 2.1 (fewer than 23 columns) are not supported, and Radio exports exist only from 2.10.4. Backups from 3.0 betas (database schema 20–24) and from versions newer than 3.1.0 (schema above 26) are not interpreted. For any other export, please open an issue with the file if you can share it.
 
 **Many episodes marked "not assessable".** Usually the time zone was not confirmed, or the history was not imported. Confirm the zone in *Edit case* and make sure the history file (or the backup) is in the case.
 
@@ -267,6 +293,10 @@ The case budget is reserved in import order: the first files have priority, and 
 - **Forensic case** — a ZIP ICdetector exports for one incident, with its fine timeline.
 - **Observation** — in the plain-language report, the episodes of the same pattern and relevance grouped together.
 - **Pattern** — the kind of behaviour ICdetector noted: band change, alternating PCI, power deviation, TAC, Timing Advance, transition.
-- **Shadow mode** — a layer that records but never changes a conclusion (Stable-Site episodes, ICdetector's local profile).
+- **Cell churn (H17)** — ICdetector 3.1.0's count of distinct serving cells and serving changes in 15 minutes, with the motion state. Shadow mode, not calibrated.
+- **Dataset cut** — a change in how ICdetector computes a field, so values before and after it are not comparable (3.1.0: H6, `TAUnit`, H11, H12, H14, `SecurityScore`, `AnomalyConfidence`, local cell confidence).
+- **No external verification (removed)** — rows from ICdetector 3.1.0 or later: `Verified = PENDING` does not mean anything is pending.
+- **Removed rule (H12)** — latency + RF, removed in ICdetector 3.1.0; `H12(retirada)` is not missing data.
+- **Shadow mode** — a layer that records but never changes a conclusion (Stable-Site episodes, ICdetector's local profile, H17 cell churn).
 - **Sub-threshold** — an ICdetector note that did not reach its alarm threshold.
 - **Verified / not contradicted / not assessable** — the three outcomes of CellCase's own checks; the last two are never equated.
