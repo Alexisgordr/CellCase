@@ -14,7 +14,7 @@
   <p>
     <a href="MANUAL.md"><strong>User manual</strong></a> ·
     <a href="#documentation">Design documents</a> ·
-    <a href="https://github.com/Alexisgordr/ICdetector">ICdetector</a>
+    <a href="https://github.com/Alexisgordr/ICdetector">ICdetector</a> (supported up to 3.1.0)
   </p>
 </div>
 
@@ -22,7 +22,7 @@
 
 ## What it is
 
-[ICdetector](https://github.com/Alexisgordr/ICdetector) watches a phone's connection to cell towers and records anything that looks unusual. CellCase is its companion: an independent Android app that **imports those exports, validates them, keeps their provenance and writes a technical report in PDF** that answers one question honestly:
+[ICdetector](https://github.com/Alexisgordr/ICdetector) watches a phone's connection to cell towers and records anything that looks unusual. CellCase 0.2.0 reads its exports from 2.10.5 up to 3.1.0, the current version. CellCase is its companion: an independent Android app that **imports those exports, validates them, keeps their provenance and writes a technical report in PDF** that answers one question honestly:
 
 > *What do these data allow us to conclude about possible fake base stations (IMSI catchers), and what should be checked next?*
 
@@ -72,7 +72,7 @@ Repetition of a common behaviour can raise the technical interest without raisin
 - It does **not** confirm or rule out a fake base station. It assesses whether the data give reasons to investigate.
 - It does **not** recalculate ICdetector's heuristics or adopt their wording: ICdetector's reasons are quoted literally and marked as such.
 - It does **not** verify the authenticity of the files, the device or the capture time zone: those are declarations of whoever created the case, and the report says so.
-- It has **no network access**: no cloud, no public cell databases, no telemetry. Verification states that ICdetector recorded (VERIFIED, NOT_FOUND…) are reported as context only.
+- It has **no network access**: no cloud, no public cell databases, no telemetry. The OpenCellID verification states that ICdetector up to 3.0 could record (VERIFIED, NOT_FOUND…) are reported as context only. ICdetector 3.1.0 removed that lookup (and the latency probe behind H12), so its rows are listed as *no external verification (removed)*, not as pending.
 
 ## Requirements
 

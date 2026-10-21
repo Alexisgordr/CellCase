@@ -159,7 +159,7 @@ Timestamp,NetType,CID,MNC,TAC,MCC,DBM,Verified,SecurityScore,FailedHeuristics,La
 | 15 | RSRQ | entero | dB | vacío | original | Solo LTE/NR. |
 | 16 | SINR | entero | dB | vacío | original | LTE: `rssnr`; NR: `ssSinr`. |
 | 17 | AnomalyConfidence | decimal con 1 cifra, 0.0–95.0 | «%» no calibrado | `0.0` también si no se calculó | derivado | `IC/core/BayesianScorer.kt:191`. **No es una probabilidad** (`HistoryRecord.kt:34-40`). Filas de esquemas antiguos sin la columna en BD exportan `0.0` (`readRecord`, `CellDbHelper.kt:1605-1606`). |
-| 18-19 | ApiLat, ApiLon | decimal | grados (antena según WiGLE/OpenCellID) | vacío | derivado externo, mutable | Se rellenan en `updateVerificationStatus`. |
+| 18-19 | ApiLat, ApiLon | decimal | grados (antena según WiGLE/OpenCellID) | vacío | derivado externo, mutable | Se rellenan en `updateVerificationStatus`. Siempre vacías desde 3.1.0 (consulta externa retirada, §1.9). |
 | 20 | TA | entero | crudo, unidad en TAUnit | vacío = no reportado | original | `logConnection` solo lo guarda si no es nulo. |
 | 21 | TAUnit | `LTE_INDEX` `GSM_INDEX` `NR_RAW` `STUB_ZERO` `UNKNOWN` | — | vacío si TA vacío | derivado (procedencia) | `IC/models/TimingAdvanceUnit.kt`. |
 | 22 | TAMeters | entero | metros | vacío si no hay conversión defendible | derivado | `LTE_INDEX`×78, `GSM_INDEX`×554, resto nulo (`TimingAdvanceUnit.toMeters`). Se recalcula **al exportar** con la regla vigente. |
@@ -395,7 +395,7 @@ timestamp_utc,elapsed_ms,event,phase,score,anomaly_confidence,cell_identity,veri
 | anomaly_confidence | decimal | `optDouble`: `NaN` si falta. |
 | cell_identity | identidad completa de la servidora | |
 | verified | estado de verificación | |
-| latency_state | `N/A` `OK` `ANOMALA` | `IC/service/NetworkLatencyMonitor.kt:21,53,62`, `MiniICService.kt:1358`. Cadena libre en el tipo: aceptar otros valores como desconocidos (Q-06). |
+| latency_state | `N/A` `OK` `ANOMALA` (vacía desde 3.1.0: sonda de latencia retirada, §8c) | `IC/service/NetworkLatencyMonitor.kt:21,53,62`, `MiniICService.kt:1358`. Cadena libre en el tipo: aceptar otros valores como desconocidos (Q-06). |
 | gps_lat, gps_lon | grados | **vacío** si no había posición. |
 | gps_accuracy_m | metros | Precisión declarada por Android. |
 | reason | texto libre | Razón sospechosa del ciclo. |
