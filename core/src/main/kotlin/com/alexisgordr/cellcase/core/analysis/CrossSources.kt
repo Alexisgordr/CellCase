@@ -15,7 +15,7 @@ import java.time.Duration
 import java.time.Instant
 
 /** Versión de las reglas de cruce entre fuentes (docs/cross-sources.md). */
-const val CROSS_RULES_VERSION = "cross/2"
+const val CROSS_RULES_VERSION = "cross/3"
 
 /** Tipo de resultado (docs/cross-sources.md §2). Ninguno es una conclusión sobre la red. */
 enum class CrossOutcome { MATCH, DIFFERENCE, COMPLEMENTARY, NOT_COMPARABLE }
@@ -626,9 +626,10 @@ object CrossSources {
                 if (o.pci != null && sm.pci != null && o.pci != sm.pci) cmp += Compared(CrossField.PCI, sm.pci.toString(), o.pci.toString(), entity = hk)
                 if (o.arfcn != null && sm.arfcn != null && o.arfcn != sm.arfcn) cmp += Compared(CrossField.ARFCN, sm.arfcn.toString(), o.arfcn.toString(), entity = hk)
                 if (cmp.isEmpty()) match += o to sm else diff += Triple(o, sm, cmp)
-                // Verified: campo que el historial puede reescribir después de la captura (§2.9)
+                // Verified: campo que el historial puede reescribir después de la captura (§2.9). Una fila de 3.1.0 o
+                // posterior no tiene verificación externa (cross/3): su PENDING no se compara con nada.
                 val sv = case.samples.minByOrNull { Duration.between(it.time ?: Instant.MIN, t).abs() }?.verified
-                if (o.verified != null && sv != null && o.verified != sv) { mutable += Compared(CrossField.VERIFIED, sv, o.verified, entity = hk); mutableRefs += o.provenance }
+                if (!o.externalVerificationRetired && o.verified != null && sv != null && o.verified != sv) { mutable += Compared(CrossField.VERIFIED, sv, o.verified, entity = hk); mutableRefs += o.provenance }
             }
             if (match.isNotEmpty()) out += one(CrossOutcome.MATCH, CrossReason.SAME_VALUE, match.size,
                 match.groupingBy { key(it.first.identity)!! }.eachCount().map { (k, n) -> Compared(CrossField.SERVING_CELL, k, k, n) },

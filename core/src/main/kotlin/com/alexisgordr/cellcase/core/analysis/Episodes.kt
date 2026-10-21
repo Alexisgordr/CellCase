@@ -579,7 +579,8 @@ object EpisodeEngine {
         val siteCells = stable?.siteCells?.filter { it.identity.joinKey == key }
         return IdentityFacts(
             key, id, mine.size, byTime.map { it.time.local!!.toLocalDate() }.toSet().size, byTime.firstOrNull(), byTime.lastOrNull(),
-            mine.mapNotNull { it.verified }.groupingBy { it }.eachCount().toSortedMap(),
+            // Solo las filas con verificación externa (anteriores a 3.1.0): en 3.1.0 su PENDING no es un estado.
+            mine.filter { !it.externalVerificationRetired }.mapNotNull { it.verified }.groupingBy { it }.eachCount().toSortedMap(),
             topoIn?.sumOf { it.observations ?: 0 }, topoIn?.sumOf { it.trusted ?: 0 },
             siteCells?.mapNotNull { it.servingDays }?.maxOrNull(), siteCells?.map { it.key }?.distinct()?.size ?: 0,
             geometry?.cells?.firstOrNull { it.identity.joinKey == key }?.familiarity

@@ -17,7 +17,7 @@ import java.time.LocalDateTime
 const val NO_VALUE = "\u2205"
 
 
-const val RULESET_VERSION = "cellcase-rules/1"
+const val RULESET_VERSION = "cellcase-rules/2"
 
 /** Identificador y versión de una regla del catálogo `docs/analysis-rules.md`. */
 data class RuleRef(val id: String, val version: Int) {
@@ -121,8 +121,17 @@ data class CollectorResult(
     val scoreBelow100: Int,
     val maxAnomalyConfidence: Double?,
     val maxConfidenceRow: HistoryObservation?,
-    val verified: Map<String, Int>
-)
+    /** Estados de verificación externa de las filas que la tenían (ICdetector anterior a 3.1.0). */
+    val verified: Map<String, Int>,
+    /**
+     * Filas de ICdetector 3.1.0 o posterior: sin verificación externa (retirada). Su `PENDING` no significa
+     * «pendiente» y no se cuenta en [verified] (cellcase-rules/2).
+     */
+    val verificationRetired: Int = 0
+) {
+    /** Historial con filas de las dos clases: con verificación (anteriores a 3.1.0) y sin ella (3.1.0 o posterior). */
+    val verificationMixed: Boolean get() = verificationRetired > 0 && verified.values.sum() > 0
+}
 
 data class DuplicateResult(val exactPairs: List<Pair<Provenance, Provenance>>, val sameTimeIdentity: List<Pair<Provenance, Provenance>>)
 
@@ -140,7 +149,11 @@ data class HistoryAnalysis(
     val ta: TaResult,
     val collector: CollectorResult,
     val duplicates: DuplicateResult,
-    val testNet: TestNetResult
+    val testNet: TestNetResult,
+    /** Reglas que ICdetector no evaluó, separando la falta de datos de las retiradas o en sombra (cellcase-rules/2). */
+    val ruleCoverage: RuleCoverage? = null,
+    /** Filas anteriores y posteriores a ICdetector 3.1.0 (cortes de dataset). */
+    val versions31: VersionSplit31 = VersionSplit31(0, 0, null, null)
 )
 
 /**
@@ -169,7 +182,9 @@ object HistoryAnalyzer {
             ta = ta(obs),
             collector = collector(obs),
             duplicates = duplicates(obs),
-            testNet = TestNetResult(obs.count { it.identity.mcc == "001" }, obs.firstOrNull { it.identity.mcc == "001" })
+            testNet = TestNetResult(obs.count { it.identity.mcc == "001" }, obs.firstOrNull { it.identity.mcc == "001" }),
+            ruleCoverage = NotEvaluated.coverage(obs),
+            versions31 = VersionSplit31.of(obs)
         )
     }
 
@@ -268,7 +283,8 @@ object HistoryAnalyzer {
             scoreBelow100 = obs.count { (it.securityScore ?: 100) < 100 },
             maxAnomalyConfidence = maxConf?.anomalyConfidence,
             maxConfidenceRow = maxConf,
-            verified = obs.groupingBy { it.verified ?: NO_VALUE }.eachCount().toSortedMap()
+            verified = obs.filter { !it.externalVerificationRetired }.groupingBy { it.verified ?: NO_VALUE }.eachCount().toSortedMap(),
+            verificationRetired = obs.count { it.externalVerificationRetired }
         )
     }
 

@@ -1,6 +1,9 @@
 package com.alexisgordr.cellcase.core.report
 
 import com.alexisgordr.cellcase.core.analysis.CaseAnalysis
+import com.alexisgordr.cellcase.core.analysis.Abstention
+import com.alexisgordr.cellcase.core.analysis.DatasetCuts
+import com.alexisgordr.cellcase.core.analysis.NotEvaluated
 import com.alexisgordr.cellcase.core.analysis.PROFILE_RULES_VERSION
 import com.alexisgordr.cellcase.core.analysis.Check
 import com.alexisgordr.cellcase.core.analysis.DataGap
@@ -1364,7 +1367,11 @@ open class ReportTextsImpl(final override val language: Language) : ReportTexts 
         l += t("report.limitations.las_heuristicas_de_icdetector_no")
         l += t("report.limitations.historial_caso_forense_y_stable")
         l += t("report.limitations.una_sola_observacion_tiene_duracion")
-        l += t("report.limitations.los_estados_de_verificacion_verified")
+        val col = a.historyAnalysis?.collector
+        if (col == null || col.verified.values.sum() > 0) l += t("report.limitations.los_estados_de_verificacion_verified")
+        if (col != null && col.verificationRetired > 0) l += if (col.verificationMixed)
+            t("report.limitations.verification_retired_mixed", int(col.verificationRetired.toLong()), int(col.verified.values.sum().toLong()))
+            else t("report.limitations.verification_retired_all", int(col.verificationRetired.toLong()))
         if (a.topology != null || a.geometry != null || a.stableSite != null) l += t("report.limitations.topologia_geometria_y_stable_site")
         if (a.localProfile?.evaluated?.let { it > 0 } == true) l += t("profile.limitation")
         val missing = availability.filter { it.status != Availability.AVAILABLE }
@@ -1804,6 +1811,8 @@ open class ReportTextsImpl(final override val language: Language) : ReportTexts 
                 t("report.label.horas") to t("report.p.con_instante_utc_unico_ambiguas", int(ha.time.exact), int(ha.time.ambiguous.size), int(ha.time.nonexistent.size)),
                 t("report.label.muestreo") to if (ha.sampling.evaluable) t("report.p.mediana_entre_filas_intervalo_s", ha.sampling.medianInterval?.let { dur(it) } ?: "—", int(ha.sampling.gaps.size)) else t("report.p.no_evaluable")
             ))
+            out += datasetCutBlocks(ctx, ha)
+            out += ruleCoverageBlocks(ha)
         }
         // Análisis no disponibles
         val unavailable = availability.filter { it.status != Availability.AVAILABLE }
@@ -1816,6 +1825,39 @@ open class ReportTextsImpl(final override val language: Language) : ReportTexts 
         )
         out += Block.Paragraph(t("report.p.no_aportado_falta_la_exportacion"), TextStyle.SMALL)
         return out
+    }
+
+    /** Historial con filas anteriores y posteriores a ICdetector 3.1.0: qué no es comparable entre los dos tramos. */
+    private fun datasetCutBlocks(ctx: TextContext, ha: HistoryAnalysis): List<Block> {
+        val v = ha.versions31
+        if (!v.mixed) return emptyList()
+        val fields = DatasetCuts.ICD_3_1_0.map { if (it == "LOCAL_CELL_TRUST") t("dataset_cut.local_cell_trust") else it }
+        return listOf(Block.Callout(CalloutKind.NOTE, t("dataset_cut.title"),
+            t("dataset_cut.text", int(v.rowsBefore.toLong()), v.lastBefore?.let { short(ctx, it) } ?: "—", int(v.rowsFrom31.toLong()),
+                v.firstFrom31?.let { short(ctx, it) } ?: "—", fields.dropLast(1).joinToString(", ") + t("dataset_cut.and") + fields.last())))
+    }
+
+    /** Reglas que ICdetector no evaluó, separando la falta de datos de las retiradas, en sombra o reservadas. */
+    private fun ruleCoverageBlocks(ha: HistoryAnalysis): List<Block> {
+        val c = ha.ruleCoverage ?: return emptyList()
+        val out = ArrayList<Block>()
+        out += Block.Paragraph(t("noteval.summary", int(c.rowsWithDataAbstention.toLong()), int(c.rowsWithField.toLong())) +
+            (if (c.unreadable > 0) " " + t("noteval.unreadable", int(c.unreadable.toLong())) else ""), TextStyle.SMALL)
+        if (c.byRule.isNotEmpty()) out += Block.Table(
+            listOf(Column(t("noteval.col.rule"), 2.4f), Column(t("noteval.col.reason"), 3.6f), Column(t("noteval.col.kind"), 2f), Column(t("report.label.filas"), 0.9f, Align.RIGHT)),
+            c.byRule.map { r -> listOf(r.abstention.rule + " " + ruleName(r.abstention.rule), abstentionReason(r.abstention), t("noteval.kind." + r.abstention.kind.name), int(r.rows.toLong())) },
+            t("noteval.caption"))
+        return out
+    }
+
+    /** Nombre de una regla de ICdetector (catálogo de 3.1.0, sin renumerar); vacío si no se conoce. */
+    fun ruleName(rule: String): String = ("rule.$rule.name").let { k -> if (Messages.has(language, k)) t(k) else "" }
+
+    /** Texto del motivo de una regla no evaluada (glosario); el código original va entre paréntesis. */
+    fun abstentionReason(a: Abstention): String = when {
+        a.reason == null -> t(if (a.rule == "H9") "noteval.reason.reserved_h9" else "noteval.reason.none")
+        a.reason in NotEvaluated.KNOWN_REASONS -> t("noteval.reason.${a.reason}") + " (${a.code})"
+        else -> a.code
     }
 
     // ───────────────────────── anexos ─────────────────────────
@@ -1951,7 +1993,8 @@ open class ReportTextsImpl(final override val language: Language) : ReportTexts 
         out += Block.KeyValues(listOf(
             t("report.historyAnnex.resultados_de_icdetector") to t("report.historyAnnex.ok_sub_umbral_motivo_sin", int(v[CollectorVerdict.OK] ?: 0), int(v[CollectorVerdict.SUBTHRESHOLD] ?: 0), int(v[CollectorVerdict.REASON_WITHOUT_PREFIX] ?: 0), int(ha.collector.scoreBelow100)),
             "AnomalyConfidence" to t("report.historyAnnex.maximo_puntuacion_interna_no_calibrada", ha.collector.maxAnomalyConfidence?.let { String.format(es, "%.1f", it) } ?: "—"),
-            t("report.historyAnnex.verificacion_externa") to ha.collector.verified.entries.joinToString("; ") { "${noValue(it.key)} ${int(it.value)}" },
+            t("report.historyAnnex.verificacion_externa") to (ha.collector.verified.entries.map { "${noValue(it.key)} ${int(it.value)}" } +
+                if (ha.collector.verificationRetired > 0) listOf(t("report.historyAnnex.verification_retired", int(ha.collector.verificationRetired.toLong()))) else emptyList()).joinToString("; "),
             t("report.historyAnnex.coherencia_de_ta") to t("report.historyAnnex.fila_s_con_tameters_distinto", int(ha.ta.incoherent.size)),
             t("report.historyAnnex.duplicados_en_el_archivo") to t("report.historyAnnex.identicas_con_misma_hora_e", int(ha.duplicates.exactPairs.size), int(ha.duplicates.sameTimeIdentity.size)),
             t("report.historyAnnex.intervalo_sin_registros") to t("report.historyAnnex.umbral_min", HistoryAnalyzer.GAP_THRESHOLD.toMinutes())
