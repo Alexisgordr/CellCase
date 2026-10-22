@@ -107,7 +107,8 @@ class Icd31ChurnTest {
         assertEquals(facts(without), facts(with))
         assertEquals(without.assessment, with.assessment)
         assertEquals(without.cross?.findings?.size, with.cross?.findings?.size)
-        assertEquals("episodes/6", com.alexisgordr.cellcase.core.analysis.EPISODE_RULES_VERSION)
+        // episodes/7 viene de la revisión del 22/10 (B1, B2, B6), no del churn: la comparación de arriba lo demuestra.
+        assertEquals("episodes/7", com.alexisgordr.cellcase.core.analysis.EPISODE_RULES_VERSION)
     }
 
     // ── 7. Caso forense de ICdetector 3.1.0 (sin latencia) ──

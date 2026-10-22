@@ -10,7 +10,7 @@ import com.alexisgordr.cellcase.core.time.DeclaredZone
 import java.time.Instant
 
 /** Versión de las reglas de combinación de exportaciones (historiales y casos forenses). */
-const val MERGE_RULES_VERSION = "merge/4"
+const val MERGE_RULES_VERSION = "merge/5"
 
 /**
  * Columnas del historial que pueden cambiar después de escribirse la fila (export-formats.md §1.5 y §1.8). En 3.0,
@@ -78,12 +78,15 @@ object HistoryMerge {
         val byBase = HashMap<List<String>, MutableList<Int>>()
         val kept = ArrayList<HistoryObservation>()
         val matches = ArrayList<RowConflict>()
+        // Fila conservada → importaciones que ya se han emparejado con ella: cada fila de otra exportación se empareja con
+        // una fila conservada distinta (B7: con `r, r` en dos archivos, las dos del segundo citaban la primera del primero).
+        val pairedWith = HashMap<Int, MutableSet<String>>()
         for (imp in ordered) for (o in imp.observations) {
             val baseKey = baseImmutable.map { "$it=${o.raw[it] ?: "∅"}" }
             val candidates = byBase[baseKey].orEmpty()
             val hit = candidates.firstOrNull { idx ->
                 val c = kept[idx]
-                c.provenance.importId != o.provenance.importId &&
+                c.provenance.importId != o.provenance.importId && o.provenance.importId !in pairedWith[idx].orEmpty() &&
                     (c.raw.keys intersect o.raw.keys).filter { it !in MUTABLE_HISTORY_COLUMNS && it !in NOT_COMPARED_HISTORY_COLUMNS }.all { c.raw[it] == o.raw[it] }
             }
             if (hit == null) {
@@ -91,6 +94,7 @@ object HistoryMerge {
                 kept += o
                 continue
             }
+            pairedWith.getOrPut(hit) { HashSet() } += o.provenance.importId
             val c = kept[hit]
             val diffs = MUTABLE_HISTORY_COLUMNS.filter { it in c.raw && it in o.raw && c.raw[it] != o.raw[it] }
                 .associateWith { c.raw[it] to o.raw[it] }

@@ -15,7 +15,7 @@ import java.time.Duration
 import java.time.Instant
 
 /** Versión de las reglas de cruce entre fuentes (docs/cross-sources.md). */
-const val CROSS_RULES_VERSION = "cross/3"
+const val CROSS_RULES_VERSION = "cross/4"
 
 /** Tipo de resultado (docs/cross-sources.md §2). Ninguno es una conclusión sobre la red. */
 enum class CrossOutcome { MATCH, DIFFERENCE, COMPLEMENTARY, NOT_COMPARABLE }
@@ -197,8 +197,17 @@ object CrossSources {
             if (i.events.isNotEmpty()) { pairs += ExportKind.FORENSIC_CASE to ExportKind.SERVICE_STATE; out += forensicRadio(ctx) }
             if (i.topology != null || i.geometry != null || i.stable != null) { out += forensicAggregates(ctx) }
         }
-        // Resultados idénticos frente a varios agregados (mismas entidades, motivo y periodo) se presentan juntos.
-        val merged = out.groupBy { f -> listOf(f.check, f.outcome, f.reason, f.sourceA, f.entities, f.start, f.end, f.window, f.count, f.derivation, f.episodes.sorted(), f.next) }
+        // Resultados idénticos frente a varios agregados (mismas entidades, motivo y periodo) se presentan juntos. Solo se
+        // juntan resultados frente a fuentes B DISTINTAS (cross/4, B4): dos resultados frente a la misma fuente (las dos
+        // versiones usadas de un caso forense frente al historial) son resultados distintos. Para eso cada resultado lleva
+        // su número de orden entre los de igual clave y fuente B, en un orden que no depende del de importación.
+        fun mergeKey(f: CrossFinding) = listOf(f.check, f.outcome, f.reason, f.sourceA, f.entities, f.start, f.end, f.window, f.count, f.derivation, f.episodes.sorted(), f.next)
+        val ordinal = java.util.IdentityHashMap<CrossFinding, Int>()
+        out.groupBy { mergeKey(it) to it.sourceB }.values.forEach { same ->
+            same.sortedWith(compareBy<CrossFinding>({ it.files.sorted().joinToString("\u0000") }, { it.refs.sortedWith(provOrder).joinToString() }))
+                .forEachIndexed { k, f -> ordinal[f] = k }
+        }
+        val merged = out.groupBy { f -> mergeKey(f) + ordinal.getValue(f) }
             .values.map { l -> if (l.size == 1) l[0] else l.sortedBy { it.sourceB.ordinal }.let { s0 ->
                 s0[0].copy(alsoB = s0.drop(1).map { it.sourceB }, files = s0.flatMap { it.files }, compared = s0.flatMap { it.compared }.distinct(), refs = s0.flatMap { it.refs }) } }
         val sorted = merged.map { f -> f.copy(refs = f.refs.distinct().sortedWith(provOrder).take(MAX_REFS), files = f.files.distinct().sorted(),
@@ -228,6 +237,17 @@ object CrossSources {
             return out
         }
         /** Filas del historial sin instante único cuya hora local podría caer en [from, to] (ambiguas o sin zona). */
+        /**
+         * Filas que no se pueden situar sin la zona (sin `ObservedAtUtc` y con la zona sin confirmar) y que, con cualquier
+         * desfase horario (UTC−12 a UTC+14), podrían caer en [from, to]. Solo ellas impiden comparar (cross/4, B2): una
+         * fila con `ObservedAtUtc` tiene instante exacto aunque la zona no esté confirmada.
+         */
+        fun unzonedNear(from: Instant, to: Instant): Boolean = unzoned.any { l ->
+            !l.minusHours(14).toInstant(java.time.ZoneOffset.UTC).isAfter(to) && !l.plusHours(12).toInstant(java.time.ZoneOffset.UTC).isBefore(from)
+        }
+        private val unzoned: List<java.time.LocalDateTime> =
+            if (i.zoneConfirmed) emptyList() else i.history.filter { it.time.resolution is TimeResolution.NoConfirmedZone }.mapNotNull { it.time.local }
+
         fun unplacedNear(from: Instant, to: Instant): List<HistoryObservation> = i.history.filter { o ->
             when (val r = o.time.resolution) {
                 is TimeResolution.Ambiguous -> !r.later.isBefore(from) && !r.earlier.isAfter(to)
@@ -300,13 +320,17 @@ object CrossSources {
                     var lo = 0; var hi = ev.size - 1; var idx = -1
                     while (lo <= hi) { val m = (lo + hi) / 2; if (!ev[m].time!!.isAfter(t)) { idx = m; lo = m + 1 } else hi = m - 1 }
                     val prior = ev[idx]
-                    val next = ev.getOrNull(idx + 1)
-                    val near = listOfNotNull(prior, next).minOf { Duration.between(it.time, t).abs() }
+                    // Frontera simétrica (cross/4, B6): a ≤ 60 s de un CAMBIO de estado de Radio (un evento cuyo estado
+                    // difiere del anterior), la fila no se compara, coincida o no; la hora del historial es de inserción y
+                    // tiene resolución de segundos. Un evento cercano que repite el estado (sondeo) no es un cambio.
+                    fun changeAt(k: Int) = k in 1 until ev.size && ev[k].state != ev[k - 1].state
+                    val nearChange = (idx downTo 0).asSequence().takeWhile { Duration.between(ev[it].time, t) <= TRANSITION_TOLERANCE }.any { changeAt(it) } ||
+                        (idx + 1 until ev.size).asSequence().takeWhile { Duration.between(t, ev[it].time) <= TRANSITION_TOLERANCE }.any { changeAt(it) }
                     when {
                         // Estado de Radio ausente o no interpretable: nunca se compara (cross/2).
                         prior.state == null || prior.state !in COMPARABLE_STATES -> SvcItem(CrossReason.STATE_NOT_INTERPRETABLE, o, prior, t)
+                        nearChange -> SvcItem(CrossReason.TRANSITION_BOUNDARY, o, prior, t)
                         prior.state == st -> SvcItem(CrossReason.SAME_VALUE, o, prior, t)
-                        near <= TRANSITION_TOLERANCE -> SvcItem(CrossReason.TRANSITION_BOUNDARY, o, prior, t)
                         else -> SvcItem(CrossReason.VALUE_DIFFERS, o, prior, t)
                     }
                 }
@@ -555,7 +579,7 @@ object CrossSources {
             val known = rows.filter { key(it.identity) != null && !c.isSimultaneous(it) }
             val (outcome, reason) = when {
                 cand == null -> CrossOutcome.NOT_COMPARABLE to CrossReason.UNKNOWN_IDENTITY
-                !i.zoneConfirmed -> CrossOutcome.NOT_COMPARABLE to CrossReason.ZONE_NOT_CONFIRMED
+                c.unzonedNear(from, to) -> CrossOutcome.NOT_COMPARABLE to CrossReason.ZONE_NOT_CONFIRMED
                 known.any { key(it.identity) == cand } -> CrossOutcome.MATCH to CrossReason.SERVING_IN_WINDOW
                 unplaced.isNotEmpty() -> CrossOutcome.NOT_COMPARABLE to CrossReason.AMBIGUOUS_TIME
                 known.isNotEmpty() -> CrossOutcome.DIFFERENCE to CrossReason.OTHER_SERVING
@@ -592,7 +616,7 @@ object CrossSources {
                 finding(CrossCheck.FORENSIC_HISTORY, o, r, ExportKind.FORENSIC_CASE, ExportKind.HISTORY, files, listOf(code), s, e, PAIR_TOLERANCE, n, cmp, refs, d, eps, nextFor(r))
             if (neighbours > 0) out += one(CrossOutcome.COMPLEMENTARY, CrossReason.NEIGHBOURS_ONLY_IN_CASE, neighbours,
                 listOf(Compared(CrossField.NEIGHBOURS, neighbours.toString(), null)), listOfNotNull(case.cells.firstOrNull { it.isNeighbour }?.provenance), Derivation.SAME_COLLECTOR)
-            if (!i.zoneConfirmed) { out += one(CrossOutcome.NOT_COMPARABLE, CrossReason.ZONE_NOT_CONFIRMED, 0, emptyList(), emptyList()); continue }
+            if (c.unzonedNear(s.minus(CASE_MARGIN), e.plus(CASE_MARGIN))) { out += one(CrossOutcome.NOT_COMPARABLE, CrossReason.ZONE_NOT_CONFIRMED, 0, emptyList(), emptyList()); continue }
             val hp = c.historyPeriod
             if (hp == null || hp.second.isBefore(s.minus(CASE_MARGIN)) || hp.first.isAfter(e.plus(CASE_MARGIN))) {
                 out += one(CrossOutcome.NOT_COMPARABLE, CrossReason.NO_OVERLAP, 0, emptyList(), listOfNotNull(serving.firstOrNull()?.provenance)); continue
@@ -629,7 +653,9 @@ object CrossSources {
                 // Verified: campo que el historial puede reescribir después de la captura (§2.9). Una fila de 3.1.0 o
                 // posterior no tiene verificación externa (cross/3): su PENDING no se compara con nada. Lo mismo vale
                 // para el caso forense: si lo grabó la 3.1.0, el `verified` de sus muestras es siempre PENDING.
-                val sv = case.samples.minByOrNull { Duration.between(it.time ?: Instant.MIN, t).abs() }?.verified
+                // La muestra cuyo `verified` se compara debe estar a ±3 s, como el resto del emparejamiento (cross/4, B7).
+                val sv = case.samples.filter { it.time != null && Duration.between(it.time, t).abs() <= PAIR_TOLERANCE }
+                    .minByOrNull { Duration.between(it.time, t).abs() }?.verified
                 if (!o.externalVerificationRetired && !case.externalVerificationRetired && o.verified != null && sv != null && o.verified != sv) { mutable += Compared(CrossField.VERIFIED, sv, o.verified, entity = hk); mutableRefs += o.provenance }
             }
             if (match.isNotEmpty()) out += one(CrossOutcome.MATCH, CrossReason.SAME_VALUE, match.size,

@@ -402,4 +402,52 @@ class CrossSourcesTest {
         val outcomes = BatchImport.run(names.map { SelectedFile(it, TestSupport.sample(it).readBytes()) }, emptyMap(), TestSupport.MADRID, { "imp-${++n}" })
         return CaseAnalyzer.analyze(outcomes.mapNotNull { (it as? BatchOutcome.Processed)?.result }, TestSupport.MADRID, null)
     }
+
+    /**
+     * Revisión 22/10 (B2): sin zona confirmada, las filas con `ObservedAtUtc` tienen instante exacto. Antes X-FOR,
+     * X-SHADOW y DESC-SAMPLING decían «zona sin confirmar» para todo el historial aunque ninguna fila cercana dependiera
+     * de la zona (X-SVC sí las comparaba). Ahora solo se para si hay filas sin situar (sin `ObservedAtUtc`) que puedan
+     * caer en la ventana con cualquier desfase horario.
+     */
+    @Test fun rowsWithUtcInstantsAreComparedWithoutConfirmedZone() {
+        val unconfirmed = DeclaredZone(java.time.ZoneId.of("Europe/Madrid"), confirmed = false)
+        val hist = TestSupport.sample("icd30/SYNTHETIC_icd30_history.csv").readBytes()
+        val case = TestSupport.sample("icd30/SYNTHETIC_icd30_ICD-2026-10-22-0001.zip").readBytes()
+        fun forensic(z: DeclaredZone) = analyze(imp(hist, "h.csv", "h", z), imp(case, "c.zip", "c", z), zone = z).f(CrossCheck.FORENSIC_HISTORY)
+        val sinZona = forensic(unconfirmed)
+        assertTrue(sinZona.none { it.reason == CrossReason.ZONE_NOT_CONFIRMED })
+        assertEquals(forensic(TestSupport.MADRID).map { Triple(it.outcome, it.reason, it.count) }, sinZona.map { Triple(it.outcome, it.reason, it.count) })
+        // Un historial solo de 3.0 (todas las filas con ObservedAtUtc): el muestreo se calcula igual que con zona
+        val lines = String(hist, Charsets.UTF_8).trimEnd('\n').lines()
+        val obsCol = lines[0].split(',').indexOf("ObservedAtUtc")
+        val onlyUtc = (listOf(lines[0]) + lines.drop(1).filter { l -> com.alexisgordr.cellcase.core.csv.CsvReader(l.reader()).next()!!.fields[obsCol].isNotEmpty() })
+            .joinToString("\n", postfix = "\n").toByteArray()
+        fun sampling(z: DeclaredZone) = analyze(imp(onlyUtc, "h.csv", "h", z), zone = z).historyAnalysis!!.sampling
+        assertEquals(sampling(TestSupport.MADRID), sampling(unconfirmed))
+        // Con filas que dependen de la zona (2.10.x, sin ObservedAtUtc), sigue siendo «sin zona»
+        assertEquals("NO_ZONE", analyze(imp(hist, "h.csv", "h", unconfirmed), zone = unconfirmed).historyAnalysis!!.sampling.notEvaluableReason)
+        // Y lejos de esas filas, X-SHADOW tampoco se para por la zona: ninguna X-SHADOW de historial dice «zona sin confirmar»
+        val ss = TestSupport.sample("icd30/SYNTHETIC_icd30_stable_site.zip").readBytes()
+        val shadow = analyze(imp(onlyUtc, "h.csv", "h", unconfirmed), imp(ss, "s.zip", "s", unconfirmed), zone = unconfirmed).f(CrossCheck.STABLE_SITE_EPISODE).filter { it.sourceB == ExportKind.HISTORY }
+        assertTrue(shadow.none { it.reason == CrossReason.ZONE_NOT_CONFIRMED })
+    }
+
+    /**
+     * Revisión 22/10 (B6, cross/4): la frontera de transición es simétrica. A ≤ 60 s de un cambio de estado de Radio, una
+     * fila que coincide tampoco se puede dar por coincidente (la hora del historial es de inserción, con resolución de
+     * segundos, igual que para una diferencia). Si los eventos cercanos no cambian el estado (sondeos repetidos), sí.
+     */
+    @Test fun transitionBoundaryIsSymmetric() {
+        val rad = imp(radio(ev("2026-09-26T07:00:00Z", "IN_SERVICE"), ev("2026-09-26T07:30:00Z", "IN_SERVICE"),
+            ev("2026-09-26T08:00:00Z", "OUT_OF_SERVICE"), ev("2026-09-26T12:00:00Z", "IN_SERVICE")), "r.csv", "imp-2")
+        fun reason(local: String, state: String) =
+            analyze(imp(csv(h(local, state = state)).toByteArray(), "h.csv", "imp-1"), rad).f(CrossCheck.SERVICE_STATE).single().let { it.outcome to it.reason }
+        val boundary = CrossOutcome.NOT_COMPARABLE to CrossReason.TRANSITION_BOUNDARY
+        assertEquals(boundary, reason("2026-09-26 10:00:30", "IN_SERVICE"))       // distinto, a 30 s del cambio
+        assertEquals(boundary, reason("2026-09-26 10:00:40", "OUT_OF_SERVICE"))   // igual, a 40 s del cambio (antes MATCH)
+        assertEquals(boundary, reason("2026-09-26 09:59:30", "IN_SERVICE"))       // igual, 30 s ANTES del cambio
+        assertEquals(CrossOutcome.MATCH to CrossReason.SAME_VALUE, reason("2026-09-26 10:05:00", "OUT_OF_SERVICE"))
+        // 07:30 es un sondeo con el mismo estado: no es un cambio, así que a 20 s sigue siendo coincidencia
+        assertEquals(CrossOutcome.MATCH to CrossReason.SAME_VALUE, reason("2026-09-26 09:30:20", "IN_SERVICE"))
+    }
 }

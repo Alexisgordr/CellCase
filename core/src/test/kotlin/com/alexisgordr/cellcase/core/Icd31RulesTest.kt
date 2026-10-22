@@ -63,7 +63,7 @@ class Icd31RulesTest {
         assertEquals(from31, col.verificationRetired)
         assertEquals(rows.size - from31, col.verified.values.sum())          // los PENDING de antes siguen contándose
         assertTrue(col.verificationMixed)
-        assertEquals("cellcase-rules/2", RULESET_VERSION)
+        assertTrue(RULESET_VERSION in setOf("cellcase-rules/2", "cellcase-rules/3"))   // cellcase-rules/2 introdujo la verificación retirada; /3 la conserva
         for (lang in Language.values()) {
             val t = text(lang, a31)
             // Con las cifras (el formato regional de estas muestras no lleva separador de millares: < 10 000 filas)
@@ -96,10 +96,10 @@ class Icd31RulesTest {
     }
 
     /** El caso 0004 como si lo hubiera grabado la 3.0.0 (`appVersion` de `case.json`) con `verified` = NOT_FOUND en sus muestras. */
-    private fun caseNotFound(): ByteArray {
+    private fun caseNotFound(timeline: (String) -> String = { it }): ByteArray {
         val entries = LinkedHashMap<String, ByteArray>()
         ZipInputStream(TestSupport.sample("icd31/SYNTHETIC_icd31_ICD-2026-10-28-0004.zip").inputStream()).use { z -> while (true) { val e = z.nextEntry ?: break; entries[e.name] = z.readBytes() } }
-        entries["timeline.csv"] = String(entries.getValue("timeline.csv")).replace("\"PENDING\"", "\"NOT_FOUND\"").toByteArray()
+        entries["timeline.csv"] = timeline(String(entries.getValue("timeline.csv")).replace("\"PENDING\"", "\"NOT_FOUND\"")).toByteArray()
         entries["case.json"] = String(entries.getValue("case.json")).replace("\"3.1.0+90627b7\"", "\"3.0.0+f5173a8\"").toByteArray()
         entries["SHA256SUMS.txt"] = entries.filterKeys { it != "SHA256SUMS.txt" }.entries.joinToString("") { (n, b) -> Hashing.sha256Hex(b) + "  " + n + "\n" }.toByteArray()
         val out = ByteArrayOutputStream()
@@ -108,11 +108,23 @@ class Icd31RulesTest {
     }
 
     @Test fun crossSourcesDoNotCompareVerifiedOnRowsFrom31() {
-        assertEquals("cross/3", CROSS_RULES_VERSION)
+        assertTrue(CROSS_RULES_VERSION in setOf("cross/3", "cross/4"))   // cross/3 introdujo esta regla; cross/4 la conserva
         fun verifiedCompared(version: String) = analyze(import(rowAtCase(version).toByteArray()), import(caseNotFound(), "caso.zip"))
             .cross!!.findings.any { f -> f.compared.any { it.field == CrossField.VERIFIED } }
         assertFalse("fila 3.1.0: su PENDING no se compara", verifiedCompared("3.1.0+90627b7"))
         assertTrue("fila 3.0.0: se sigue comparando", verifiedCompared("3.0.0+f5173a8"))
+    }
+
+    /**
+     * Revisión 22/10 (B7, cross/4): el `verified` del caso se toma de una muestra a ±3 s de la fila, como el resto de X-FOR.
+     * Antes se tomaba la muestra más cercana a cualquier distancia: aquí la primera muestra se mueve 10 s y su estado se
+     * comparaba igualmente con la fila emparejada por las celdas a las 15:12:00.
+     */
+    @Test fun verifiedOfTheCaseIsComparedOnlyWithASampleWithinThePairingTolerance() {
+        fun compared(case: ByteArray) = analyze(import(rowAtCase("3.0.0+f5173a8").toByteArray()), import(case, "caso.zip"))
+            .cross!!.findings.any { f -> f.compared.any { it.field == CrossField.VERIFIED } }
+        assertTrue(compared(caseNotFound()))
+        assertFalse(compared(caseNotFound { it.replaceFirst("\"2026-10-28T15:12:00Z\"", "\"2026-10-28T15:12:10Z\"") }))
     }
 
     /** Un caso forense grabado por 3.1.0 (PENDING sin significado) frente a una fila de 3.0 con VERIFIED: tampoco se compara. */

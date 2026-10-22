@@ -27,7 +27,7 @@ experimental) y advierte que los umbrales no están calibrados, que una desviaci
 - **Copia de seguridad**: además, las referencias aprendidas (`local_profile`) por madurez y los cambios de modo
   (`profile_mode_events`). Ninguna exportación los incluye.
 - Las filas grabadas antes de 3.0 no tienen perfil; se cuentan aparte (filas con columnas de 3.0).
-- Al fusionar historiales (`merge/4`), las columnas del perfil son reescribibles: si una exportación tiene la fila
+- Al fusionar historiales (`merge/4` y posteriores), las columnas del perfil son reescribibles: si una exportación tiene la fila
   evaluada y otra no, se conserva la evaluada.
 
 ## 3. Qué se presenta

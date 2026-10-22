@@ -1,4 +1,4 @@
-# Reglas de episodios (`episodes/6`)
+# Reglas de episodios (`episodes/7`)
 
 Código: `core/.../analysis/Episodes.kt` (`EpisodeEngine`) y `Patterns.kt`. Todo es determinista: las mismas
 importaciones producen los mismos episodios, prioridades y numeración.
@@ -37,7 +37,7 @@ comparando la tecnología de la fila anterior.
 ## 2. Agrupación
 
 - **R1** Las señales de la misma identidad completa y del mismo tipo de patrón, separadas por ≤ 30 min, forman un episodio. Un caso forense o un episodio de Stable-Site de esa celda se unen a él.
-- **R3** Un caso forense sin identidad enlaza lo que se solapa con su ventana (±2 min).
+- **R3** Un caso forense sin identidad enlaza lo que se solapa con su ventana (±2 min). Solo así cuenta para el episodio (`episodes/7`): un caso sin identidad que cae en la ventana de contexto (±30 min) pero no se enlaza forma su propio episodio y no se cita en el otro.
 - **R4** Radio se asocia a los episodios cuya ventana ±5 min contiene el estado degradado. Si no hay ninguno, queda aislado y no forma incidencia.
 - **R5** Los episodios separados por ≤ 15 min forman un **grupo** (G1, G2…). Los grupos no se fusionan: cada episodio conserva su identidad, sus referencias y sus conclusiones, y la proximidad no implica una causa común.
 
@@ -55,7 +55,8 @@ comparando la tecnología de la fila anterior.
 - **Momento**: señales a ≤ 60 s del inicio del momento cuentan una vez. Así, varias representaciones del mismo hecho no inflan la persistencia.
 - **Duración**: con un solo momento es **desconocida**. Con varios, solo se conoce el intervalo entre el primero y el último, que **no** demuestra actividad continua. La ventana de un caso forense sí es un intervalo registrado.
 - **Persistencia** (dentro del episodio): ≥ 3 momentos en ≥ 10 min.
-- **Recurrencia** (entre días): la misma celda con el mismo patrón en ≥ 2 fechas locales. Es un criterio distinto de la persistencia.
+- **Recurrencia** (entre días): la misma celda con el mismo patrón en ≥ 2 fechas: la del inicio del episodio y las de las señales de esa celda y patrón **fuera** del episodio (`episodes/7`). Un episodio que cruza la medianoche cuenta un día. Las fechas son de la zona del expediente (UTC si no está confirmada, como el resto del informe). Es un criterio distinto de la persistencia.
+- **Mediana** (línea base de potencia, §3): con un número par de filas, la menor de las dos centrales (rango más cercano, siempre un valor observado; `episodes/7`).
 
 ## 5. Prioridad (sin porcentajes)
 
@@ -154,3 +155,21 @@ Efecto en las muestras sintéticas: el número de episodios no cambia; ningún e
 - **Rendimiento**: la agrupación corta la búsqueda en cuanto la siguiente señal empieza más de 30 min después, y la
   fila anterior, las ventanas y la línea base de potencia se buscan con búsqueda binaria. Con 40.000 filas (la mitad
   sub-umbral) el motor pasa de 38 s a 4 s en la JVM con exactamente los mismos episodios (`EpisodeReviewTest`).
+
+## 11. Cambios en `episodes/7` (revisión de código, 2026-10-22, D-061)
+
+- **Recurrencia (§4)**: se cuentan los días del episodio (el de su inicio) y los de las señales de esa celda y patrón
+  fuera de él. Antes se contaban las fechas de todas las filas, incluidas las del propio episodio: un episodio de 8 min
+  con señales a las 23:57 y a las 00:05 contaba dos días, era «recurrente» sin ningún episodio de otro día que citar y,
+  con el comportamiento comprobado en las mediciones, pasaba de contexto a revisar.
+- **Zona de las fechas**: la recurrencia, los episodios citados de otros días y los grupos de observaciones usan la
+  misma fecha: la de la zona del expediente, o UTC si no está confirmada (como el resto del informe). Antes, con un
+  historial de 3.0 y la zona sin confirmar, la recurrencia contaba la fecha local del teléfono y lo demás la fecha UTC.
+- **Mediana de la línea base de potencia**: con un número par de filas, la menor de las dos centrales (antes la mayor),
+  la misma convención que el resto de CellCase. En el borde decidía el resultado: con [−100, −100, −100, −80, −80, −80]
+  y una señal a −90 «(−10 dB)», la mayor (−80) daba «visible».
+- **Casos forenses sin identidad (R3)**: solo cuentan para el episodio al que R3 los enlaza (±2 min). Antes bastaba con
+  caer en la ventana de contexto (±30 min): el caso formaba su propio episodio y además figuraba en el otro, le bajaba
+  la calidad a «limitada» y le quitaba «sin caso forense».
+- Con las muestras sintéticas no cambia ninguna prioridad ni relevancia. En el caso de 40.000 filas de las pruebas
+  (importado con zona de Madrid y analizado en UTC), 924 episodios pasan de 14 a 15 días de recurrencia, por la zona.

@@ -108,7 +108,13 @@ data class AnalysisConfig(
     val zoneId: String,
     val zoneConfirmed: Boolean,
     val period: PeriodOfInterest?,
-    val rules: String = "$RULESET_VERSION+$EPISODE_RULES_VERSION",
+    /**
+     * Versiones de todo lo que cambia el resultado (revisión 22/10, B7): lectores, reglas del historial, episodios,
+     * cruces, fusión, perfil local y churn. Antes solo las dos primeras.
+     */
+    val rules: String = listOf(com.alexisgordr.cellcase.core.importing.READERS_VERSION, RULESET_VERSION, EPISODE_RULES_VERSION,
+        com.alexisgordr.cellcase.core.analysis.CROSS_RULES_VERSION, com.alexisgordr.cellcase.core.analysis.MERGE_RULES_VERSION,
+        com.alexisgordr.cellcase.core.analysis.PROFILE_RULES_VERSION, com.alexisgordr.cellcase.core.analysis.CHURN_RULES_VERSION).joinToString("+"),
     /** Huellas SHA-256 de los archivos incluidos (añadir o quitar archivos también cambia el resultado). */
     val fileHashes: List<String> = emptyList()
 ) {

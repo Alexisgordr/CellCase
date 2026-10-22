@@ -26,7 +26,7 @@ celdas» / «H17 Cell churn»), y se usan en el glosario de motivos, en la secci
 ## 2. Qué hace CellCase
 
 Solo **describe**. El cambio de celdas no interviene en los episodios, las prioridades, la relevancia ni la
-valoración del expediente (`episodes/6` no cambia), igual que el perfil local (D-055). No hay umbrales propios de
+valoración del expediente (el churn no cambia las reglas de episodios), igual que el perfil local (D-055). No hay umbrales propios de
 CellCase.
 
 Con las filas que traen `ChurnCells15m` y `ChurnChanges15m` (ICdetector 3.1.0 o posterior; las anteriores los

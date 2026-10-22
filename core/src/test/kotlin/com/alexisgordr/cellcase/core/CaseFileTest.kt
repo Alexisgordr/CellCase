@@ -55,6 +55,32 @@ class CaseFileTest {
         assertNotEquals(base.fingerprint(), base.copy(fileHashes = listOf("a")).fingerprint())
     }
 
+    /**
+     * Revisión 22/10 (B7): la huella de la configuración incluye TODAS las versiones que cambian el resultado (lectores,
+     * reglas del historial, episodios, cruces, fusión, perfil local y churn). Antes solo las dos primeras: un informe
+     * hecho con `cross/3` no se marcaba como «configuración previa» al pasar a `cross/4`.
+     */
+    @Test fun configRulesIncludeEveryVersionThatChangesTheResult() {
+        val rules = AnalysisConfig("Europe/Madrid", true, null).rules
+        for (v in listOf(com.alexisgordr.cellcase.core.importing.READERS_VERSION, com.alexisgordr.cellcase.core.analysis.RULESET_VERSION,
+            com.alexisgordr.cellcase.core.analysis.EPISODE_RULES_VERSION, com.alexisgordr.cellcase.core.analysis.CROSS_RULES_VERSION,
+            com.alexisgordr.cellcase.core.analysis.MERGE_RULES_VERSION, com.alexisgordr.cellcase.core.analysis.PROFILE_RULES_VERSION,
+            com.alexisgordr.cellcase.core.analysis.CHURN_RULES_VERSION)) assertTrue("$v en $rules", v in rules)
+    }
+
+    /** Revisión 22/10 (B7): escribir sobre un archivo existente lo sustituye sin borrarlo antes (sin ventana sin destino). */
+    @Test fun atomicWriteReplacesAnExistingFile() {
+        val dir = Files.createTempDirectory("atomic").toFile()
+        val target = File(dir, "informe.pdf").apply { writeText("viejo") }
+        com.alexisgordr.cellcase.core.casefile.AtomicFiles.write(target) { it.write("nuevo".toByteArray()) }
+        assertEquals("nuevo", target.readText())
+        assertTrue(com.alexisgordr.cellcase.core.casefile.AtomicFiles.leftovers(dir).isEmpty())
+        // Si la escritura falla, el archivo anterior sigue intacto
+        try { com.alexisgordr.cellcase.core.casefile.AtomicFiles.write(target) { it.write("x".toByteArray()); throw java.io.IOException("lleno") } } catch (_: java.io.IOException) {}
+        assertEquals("nuevo", target.readText())
+        dir.deleteRecursively()
+    }
+
     @Test fun twoPhaseDeletionOnlyTouchesPrivateStorageAndResumes() {
         val root = Files.createTempDirectory("cc").toFile()
         val outside = File(root.parentFile, "seleccionado-${System.nanoTime()}.csv").apply { writeText("original del usuario") }

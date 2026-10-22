@@ -65,7 +65,7 @@ The analysis itself groups every ICdetector signal (a flagged history row, a for
 | **Technical interest** (priority of review) | Priority review · To review · Context | ICdetector alarm, behaviour verified in the measurements, recurrence or persistence, data quality |
 | **Spoofing relevance** | Insufficient evidence · Observations that need more data · *(Evidence requiring specialist investigation — never assigned: no evaluated criteria exist yet)* | Pattern kind (identity-related patterns weigh more), alarms, forensic cases |
 
-Repetition of a common behaviour can raise the technical interest without raising suspicion. The rules are documented in [`docs/episode-rules.md`](docs/episode-rules.md) and versioned (`episodes/6`); every report states which version produced it.
+Repetition of a common behaviour can raise the technical interest without raising suspicion. The rules are documented in [`docs/episode-rules.md`](docs/episode-rules.md) and versioned (`episodes/7`); every report states which version produced it.
 
 ## What it does not do
 
@@ -131,9 +131,9 @@ All samples under `samples/` are **synthetic** and marked as such; the first rea
 | [`MANUAL.md`](MANUAL.md) | **User manual**: screens, importing, reading the analysis, generating and sharing reports, privacy, troubleshooting |
 | [`docs/export-formats.md`](docs/export-formats.md) | Inventory of every ICdetector export, deduced from its source code |
 | [`docs/backup-format.md`](docs/backup-format.md) | The `.icdbackup` file of ICdetector 3.0.0 and 3.1.0 (schemas 25 and 26) and how CellCase reads it |
-| [`docs/episode-rules.md`](docs/episode-rules.md) | How signals become episodes, priorities and relevance (`episodes/6`) |
+| [`docs/episode-rules.md`](docs/episode-rules.md) | How signals become episodes, priorities and relevance (`episodes/7`) |
 | [`docs/analysis-rules.md`](docs/analysis-rules.md) | Descriptive rules applied to the history |
-| [`docs/cross-sources.md`](docs/cross-sources.md) | Cross-checks between sources (`cross/3`) |
+| [`docs/cross-sources.md`](docs/cross-sources.md) | Cross-checks between sources (`cross/4`) |
 | [`docs/churn.md`](docs/churn.md) | ICdetector 3.1.0's cell churn (H17), shown as shadow context (`churn/1`) |
 | [`docs/local-profile.md`](docs/local-profile.md) | ICdetector 3.0's local profile, shown as context |
 | [`docs/limits.md`](docs/limits.md) | Import and memory limits, with measurements |

@@ -17,7 +17,7 @@ import java.time.LocalDateTime
 const val NO_VALUE = "\u2205"
 
 
-const val RULESET_VERSION = "cellcase-rules/2"
+const val RULESET_VERSION = "cellcase-rules/3"
 
 /** Identificador y versión de una regla del catálogo `docs/analysis-rules.md`. */
 data class RuleRef(val id: String, val version: Int) {
@@ -28,17 +28,20 @@ object Rules {
     val PERIOD = RuleRef("DESC-PERIOD", 1)
     val FIELDS = RuleRef("QUAL-FIELDS", 1)
     val TIME = RuleRef("QUAL-TIME", 1)
-    val SAMPLING = RuleRef("DESC-SAMPLING", 1)
+    /** /2: sin zona confirmada se muestrea si todas las filas tienen instante exacto (B2). */
+    val SAMPLING = RuleRef("DESC-SAMPLING", 2)
     val CELLS = RuleRef("DESC-CELLS", 1)
     val POWER = RuleRef("DESC-POWER", 1)
-    val TA = RuleRef("COH-TA", 1)
+    /** /2: sin TAMeters (vacío o en conflicto tras fusionar) no se compara (B3). */
+    val TA = RuleRef("COH-TA", 2)
     /** /2: las filas de ICdetector 3.1.0 no tienen verificación externa (cellcase-rules/2). */
     val COLLECTOR = RuleRef("COL-RESULTS", 2)
     /** Reglas no evaluadas por ICdetector, separando falta de datos de retirada, sombra y reserva (NotEvaluated.kt). */
     val RULE_COVERAGE = RuleRef("COL-RULES", 1)
     /** Historial con filas de antes y de después de ICdetector 3.1.0 (DatasetCuts.kt). */
     val DATASET_CUT = RuleRef("QUAL-CUT", 1)
-    val DUP = RuleRef("COH-DUP", 1)
+    /** /2: la «misma hora» es el mismo instante cuando hay ObservedAtUtc (B5). */
+    val DUP = RuleRef("COH-DUP", 2)
     val TESTNET = RuleRef("QUAL-TESTNET", 1)
     fun missing(kind: ExportKind) = RuleRef("MISSING-${kind.name}", 1)
 }
@@ -231,13 +234,17 @@ object HistoryAnalyzer {
     }
 
     private fun sampling(obs: List<HistoryObservation>, zoneConfirmed: Boolean): SamplingResult {
-        if (!zoneConfirmed) return SamplingResult(false, "NO_ZONE", 0, null, GAP_THRESHOLD, emptyList(), Duration.ZERO)
+        // Sin zona confirmada solo se para si hay filas que dependen de ella (sin ObservedAtUtc): faltarían en los
+        // intervalos y darían huecos falsos. Un historial de 3.0 con instantes exactos se muestrea igual (B2).
+        if (!zoneConfirmed && obs.any { it.time.resolution is TimeResolution.NoConfirmedZone })
+            return SamplingResult(false, "NO_ZONE", 0, null, GAP_THRESHOLD, emptyList(), Duration.ZERO)
         val exact = obs.filter { it.time.instantOrNull != null }
             .sortedWith(compareBy<HistoryObservation> { it.time.instantOrNull }.thenBy { it.provenance.startLine })
         if (exact.size < 2) return SamplingResult(false, "TOO_FEW", exact.size, null, GAP_THRESHOLD, emptyList(), Duration.ZERO)
         val intervals = exact.zipWithNext { a, b -> Duration.between(a.time.instantOrNull, b.time.instantOrNull) }
         val sortedIntervals = intervals.sorted()
-        val median = sortedIntervals[sortedIntervals.size / 2]
+        // Mediana por rango más cercano: con un número par, el menor de los dos centrales (DESC-SAMPLING/2, B6)
+        val median = sortedIntervals[(sortedIntervals.size - 1) / 2]
         val gaps = exact.zipWithNext().mapNotNull { (a, b) ->
             val d = Duration.between(a.time.instantOrNull, b.time.instantOrNull)
             if (d >= GAP_THRESHOLD) Gap(a, b, d) else null
@@ -274,7 +281,9 @@ object HistoryAnalyzer {
             val unit = o.taUnit ?: return@filter false
             val factor = when (unit) { "LTE_INDEX" -> 78; "GSM_INDEX" -> 554; else -> null }
             val rawMeters = o.raw["TAMeters"].orEmpty()
-            if (factor == null) rawMeters.isNotEmpty() else o.taMeters != o.timingAdvance!! * factor
+            // Sin TAMeters (vacío, o anulado al fusionar dos exportaciones que no coinciden) no hay nada que comparar
+            // (COH-TA/2, B3): antes `null != TA × factor` contaba como incoherencia.
+            if (factor == null) rawMeters.isNotEmpty() else o.taMeters != null && o.taMeters != o.timingAdvance!! * factor
         }
         return TaResult(withTa.size, withTa.groupingBy { it.taUnit ?: NO_VALUE }.eachCount().toSortedMap(), incoherent)
     }
@@ -301,7 +310,9 @@ object HistoryAnalyzer {
         for (o in obs) {
             val prev = byContent.putIfAbsent(o.raw.values.toList(), o)
             if (prev != null) { exact += prev.provenance to o.provenance; continue }
-            val key = o.identity.joinKey?.let { "${o.time.raw}|$it" } ?: continue
+            // Misma clave que el importador (COH-DUP/2, B5): con ObservedAtUtc la «misma hora» es el mismo instante, y las
+            // dos filas de la hora repetida de octubre no lo son.
+            val key = o.identity.joinKey?.let { "${o.observedAtUtc ?: o.time.raw}|$it" } ?: continue
             byKey.putIfAbsent(key, o)?.let { same += it.provenance to o.provenance }
         }
         return DuplicateResult(exact, same)

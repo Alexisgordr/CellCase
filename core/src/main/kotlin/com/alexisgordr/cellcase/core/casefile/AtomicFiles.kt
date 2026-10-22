@@ -20,10 +20,14 @@ object AtomicFiles {
                 fos.fd.sync()
                 r
             }
-            if (target.exists()) target.delete()
-            if (!part.renameTo(target)) {
-                part.copyTo(target, overwrite = true)
-                part.delete()
+            // Renombrado que sustituye el destino de una vez (revisión 22/10, B7): antes se borraba el destino y después
+            // se renombraba, y un corte entre los dos pasos dejaba sin archivo. Si el sistema no admite el movimiento
+            // atómico, se sustituye igualmente con un solo movimiento.
+            val from = part.toPath(); val to = target.toPath()
+            try {
+                java.nio.file.Files.move(from, to, java.nio.file.StandardCopyOption.ATOMIC_MOVE, java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+            } catch (_: java.nio.file.AtomicMoveNotSupportedException) {
+                java.nio.file.Files.move(from, to, java.nio.file.StandardCopyOption.REPLACE_EXISTING)
             }
             return result
         } catch (t: Throwable) {

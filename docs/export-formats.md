@@ -230,7 +230,7 @@ de orden; se añaden 19 al final:
 |---|---|---|
 | `ObservedAtUtc` | Instante UTC de la observación (ISO-8601 con milisegundos) | Instante exacto (truncado a segundos) y desfase de la hora local; resuelve la hora repetida del cambio de horario y avisa si no cuadra con la zona declarada |
 | `NotEvaluatedHeuristics` | Heurísticas que no se pudieron evaluar en esa fila | Se conserva |
-| `GpsAccuracyM` | Precisión de la posición | Reescribible al fusionar (`merge/4`) |
+| `GpsAccuracyM` | Precisión de la posición | Reescribible al fusionar (`merge/4` y posteriores) |
 | `AppVersion` | Versión de ICdetector que escribió la fila | Se conserva |
 | `ExportDevice`, `ExportAndroid` | Teléfono y Android **que exportan** (iguales en todas las filas) | Datos de la exportación, no de la fila; no se comparan al fusionar |
 | `LocationMode` | Modo de localización | Se conserva |
@@ -267,7 +267,7 @@ Cambios de **significado** en columnas que ya existían (sin cambiar el formato)
 - `Verified`, `ApiLat`, `ApiLon`: la verificación externa (OpenCellID) se retiró en 3.1.0. Las filas nuevas llevan
   siempre `PENDING` y coordenadas vacías: **no hay nada pendiente**. CellCase clasifica las filas con `AppVersion`
   3.1.0 o posterior como «sin verificación externa (retirada)» y no las cuenta como pendientes ni las compara con
-  otras fuentes (`cellcase-rules/2`, `cross/3`).
+  otras fuentes (`cellcase-rules/2` y `cross/3`, y posteriores).
 - `NotEvaluatedHeuristics`: formato `Hn` o `Hn(motivo)` separados por `;`, o `NONE`. Motivos nuevos de 3.1.0:
   `H12(retirada)` (en todas las filas: la regla de latencia + RF se retiró), `H17(sombra)` (en todas las filas: el
   cambio de celdas se registra pero no se evalúa), `H6(ta_gsm)`, `H6(ta_stub)`, `H6(ta_sin_verificar)` y

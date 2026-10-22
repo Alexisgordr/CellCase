@@ -18,7 +18,7 @@ import java.time.LocalDate
 /**
  * Versión de las reglas de episodios. Cambios respecto a `episodes/1` en docs/episode-rules.md §6.
  */
-const val EPISODE_RULES_VERSION = "episodes/6"
+const val EPISODE_RULES_VERSION = "episodes/7"
 
 /** Origen de una señal. Historial, caso forense y Stable-Site son valoraciones de ICdetector. */
 enum class SignalSource { HISTORY_COLLECTOR, FORENSIC_CASE, SERVICE_STATE, STABLE_SITE_SHADOW }
@@ -290,12 +290,20 @@ object EpisodeEngine {
             gEnd = if (gEnd == null || en.isAfter(gEnd)) en else gEnd
         }
 
-        // Recurrencia entre días: (celda, tipo de patrón) → fechas locales con señales del colector.
-        val recurrence = HashMap<Pair<String, PatternKind>, MutableSet<LocalDate>>()
+        // Fecha de un instante en la zona del expediente: la MISMA para la recurrencia, los episodios citados de otros días
+        // y los grupos de observaciones (revisión 22/10, B2). Sin zona confirmada, [zone] es UTC, como el resto del informe.
+        fun day(t: Instant): LocalDate = t.atZone(zone).toLocalDate()
+        // Una fila sin instante único (hora repetida de octubre sin ObservedAtUtc) no forma episodio, pero su fecha
+        // local no es ambigua y cuenta para la recurrencia.
+        fun rowDay(o: HistoryObservation): LocalDate? = o.time.instantOrNull?.let(::day) ?: o.time.local?.toLocalDate()
+
+        // Recurrencia entre días: (celda, tipo de patrón) → filas del colector con su fecha. Se guarda la fila para no
+        // contar las del propio episodio (B1: un episodio que cruza la medianoche no es recurrente por sí solo).
+        val recurrence = HashMap<Pair<String, PatternKind>, MutableList<Pair<LocalDate, HistoryObservation>>>()
         collectorRows.forEach { o ->
             val k = o.identity.joinKey ?: return@forEach
-            val d = o.time.local?.toLocalDate() ?: return@forEach
-            ReasonParser.parse(o.failedHeuristics).map { it.kind }.distinct().forEach { recurrence.getOrPut(k to it) { HashSet() } += d }
+            val d = rowDay(o) ?: return@forEach
+            ReasonParser.parse(o.failedHeuristics).map { it.kind }.distinct().forEach { recurrence.getOrPut(k to it) { ArrayList() } += d to o }
         }
 
         val idFacts = HashMap<String, IdentityFacts>()
@@ -305,11 +313,9 @@ object EpisodeEngine {
         }
 
         val drafts = clusters.mapIndexed { i, c ->
-            buildEpisode(i + 1, groupOf[i], c, serviceFor[i].orEmpty(), index, timedEvents, forensic, topology, recurrence, ::facts)
+            buildEpisode(i + 1, groupOf[i], c, serviceFor[i].orEmpty(), index, timedEvents, forensic, topology, recurrence, day(c.first().start), ::facts)
         }
-        // Episodios de la misma celda y patrón en otros días (se citan; no se fusionan).
-        // Fecha en la MISMA zona que la recurrencia (fecha local de las filas), no en UTC.
-        fun day(t: Instant) = t.atZone(zone).toLocalDate()
+        // Episodios de la misma celda y patrón en otros días (se citan; no se fusionan). Misma fecha que la recurrencia.
         val byPatternAndCell = HashMap<Pair<PatternKind, String>, MutableList<Episode>>()
         drafts.forEach { d -> d.identities.map { it.key }.distinct().forEach { k -> byPatternAndCell.getOrPut(d.mainPattern to k) { ArrayList() } += d } }
         val episodes = drafts.map { e ->
@@ -324,7 +330,8 @@ object EpisodeEngine {
     private fun buildEpisode(
         number: Int, group: Int, g: List<Signal>, service: List<Signal>, index: RowIndex, timedEvents: List<ServiceStateEvent>,
         forensic: List<Pair<String, ForensicCaseData>>, topology: TopologyData?,
-        recurrence: Map<Pair<String, PatternKind>, Set<LocalDate>>, facts: (CellIdentity) -> IdentityFacts?
+        recurrence: Map<Pair<String, PatternKind>, List<Pair<LocalDate, HistoryObservation>>>, episodeDay: LocalDate,
+        facts: (CellIdentity) -> IdentityFacts?
     ): Episode {
         val start = g.first().start; val end = g.maxOf { it.end }
         val all = (g + service).sortedBy { it.start }
@@ -336,11 +343,14 @@ object EpisodeEngine {
         val after = inWin.filter { it.time.instantOrNull!!.isAfter(end) }
         val during = inWin.filter { val t = it.time.instantOrNull!!; !t.isBefore(start) && !t.isAfter(end) }
         val evs = timedEvents.filter { !it.time!!.isBefore(winStart) && !it.time.isAfter(winEnd) }
-        // Un caso forense con identidad solo cuenta si es de una celda del episodio; sin identidad se enlaza por la
-        // ventana (R3), pero entonces no se sabe de qué celda es y la calidad queda limitada.
+        // Un caso forense con identidad solo cuenta si es de una celda del episodio. Sin identidad, solo si R3 lo ha
+        // enlazado a este episodio (se solapa con una señal a ±2 min, y entonces es una señal de [g]): no basta con caer
+        // en la ventana de contexto (episodes/7, B6), porque entonces forma su propio episodio. Enlazado así, no se sabe
+        // de qué celda es y la calidad queda limitada.
         val idKeys = ids.mapNotNull { it.joinKey }.toSet()
+        val linkedCaseCodes = g.filter { it.source == SignalSource.FORENSIC_CASE }.map { it.text }.toSet()
         val forensicInWindow = forensic.filter { (_, c) -> c.start != null && !c.start!!.isAfter(winEnd) && !(c.end ?: c.start!!).isBefore(winStart) }
-            .filter { (_, c) -> c.meta.cellIdentity?.joinKey.let { k -> k == null || k in idKeys } }
+            .filter { (_, c) -> c.meta.cellIdentity?.joinKey.let { k -> if (k == null) (c.meta.caseCode ?: "?") in linkedCaseCodes else k in idKeys } }
         val forensicWithoutIdentity = forensicInWindow.any { (_, c) -> c.meta.cellIdentity?.joinKey == null }
         val forensicIds = forensicInWindow.map { it.first }
         val radios = (ids.map { it.radio } + during.map { it.identity.radio }).filter { it != RadioTech.UNKNOWN }.toSet()
@@ -357,7 +367,13 @@ object EpisodeEngine {
         // Duración conocida: varios momentos o una señal que ya es un intervalo (ventana de un caso forense).
         val durationKnown = moments > 1 || g.any { it.end.isAfter(it.start) }
         val persistence = if (moments >= SUSTAINED_MOMENTS && Duration.between(start, end) >= SUSTAINED_SPAN) Level.HIGH else Level.LOW
-        val recurrenceDays = idf.maxOfOrNull { f -> recurrence[f.key to mainPattern]?.size ?: 0 } ?: 0
+        // Días con el mismo patrón en la misma celda: el del inicio de este episodio más las fechas de las filas que NO son
+        // de este episodio (B1). Así un episodio que cruza la medianoche cuenta un día, y es recurrente solo si hay
+        // señales de esa celda y patrón otro día, que son las que se citan como episodios de otros días.
+        val own = java.util.Collections.newSetFromMap(java.util.IdentityHashMap<HistoryObservation, Boolean>()).apply { g.mapNotNull { it.row }.forEach { add(it) } }
+        val recurrenceDays = idf.maxOfOrNull { f ->
+            (recurrence[f.key to mainPattern].orEmpty().filter { (_, o) -> o !in own }.map { it.first } + episodeDay).toSet().size
+        } ?: 0
 
         val signalRows = g.mapNotNull { it.row }
         val measurement = measure(mainPattern, g, signalRows, index, start, end)
@@ -500,7 +516,9 @@ object EpisodeEngine {
                     val k = o.identity.joinKey ?: return@mapNotNull null
                     val dbm = o.dbm ?: return@mapNotNull null
                     val base = baseByKey.getOrPut(k) { index.dbmOutside(k, start.minus(CONTEXT), end.plus(CONTEXT)) }
-                    if (base.size < BASELINE_MIN_ROWS) null else Triple(dbm, base[base.size / 2], base.size)
+                    // Mediana: con un número par de filas, la menor de las dos centrales (episodes/7, B6; la misma
+                    // convención que DESC-POWER, DESC-SAMPLING y el churn: rango más cercano, siempre un valor observado).
+                    if (base.size < BASELINE_MIN_ROWS) null else Triple(dbm, base[(base.size - 1) / 2], base.size)
                 }
                 val reported = g.flatMap { it.reasons }.firstOrNull { it.kind == PatternKind.POWER_DEVIATION }?.db
                 val consistent = res.any { (d, m, _) -> kotlin.math.abs(d - m) >= POWER_DIFF_DB && (reported == null || (d - m) * reported > 0) }

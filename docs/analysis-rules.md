@@ -1,10 +1,18 @@
 # Catálogo de reglas de análisis
 
-Conjunto de reglas: **`cellcase-rules/2`**. Cada hallazgo del informe indica la regla y su versión.
+Conjunto de reglas: **`cellcase-rules/3`**. Cada hallazgo del informe indica la regla y su versión.
+
+Cambios de `cellcase-rules/3` (revisión de código del 22/10/2026, D-061): `DESC-SAMPLING/2` (sin zona confirmada se
+muestrea si ninguna fila depende de la zona; mediana por rango más cercano), `COH-TA/2` (sin `TAMeters` no se compara)
+y `COH-DUP/2` (con `ObservedAtUtc`, la «misma hora» es el mismo instante).
+
+**Mediana** (en todo CellCase): con un número par de valores, el menor de los dos centrales, es decir, el valor en
+la posición ⌈n/2⌉ de la lista ordenada (rango más cercano). Siempre es un valor observado. La usan DESC-POWER,
+DESC-SAMPLING, la línea base de potencia de los episodios (`episodes/7`) y el churn (`churn/1`).
 
 Cambios de `cellcase-rules/2` (CellCase 0.2.0, D-057, para ICdetector 3.1.0): `COL-RESULTS/2` (verificación externa
 retirada), `COL-RULES/1` (reglas no evaluadas) y `QUAL-CUT/1` (corte de dataset) son nuevas o cambian; el resto de
-reglas siguen en la versión 1. Las reglas de episodios (`episodes/6`) no cambian.
+reglas siguen en la versión 1. Las reglas de episodios (entonces `episodes/6`) no cambiaron.
 
 Principios (D-016, D-021, requisitos de fase 5):
 
@@ -63,7 +71,7 @@ para descartar valores imposibles, no límites normativos.
 - **No evaluable:** sin zona confirmada (las horas se usan solo como texto local).
 - **No permite concluir:** cuál de los dos instantes de una hora ambigua es el correcto.
 
-## DESC-SAMPLING/1 · Intervalos entre registros
+## DESC-SAMPLING/2 · Intervalos entre registros
 
 - **Pregunta:** ¿hay periodos sin registros dentro del historial?
 - **Datos:** instantes UTC exactos (filas ambiguas, inexistentes o inválidas excluidas), ordenados.
@@ -73,7 +81,10 @@ para descartar valores imposibles, no límites normativos.
 - **Evidencia:** fila anterior y posterior de cada hueco listado.
 - **Alternativas:** servicio detenido, teléfono apagado, sin cobertura o sin celda registrable,
   ahorro de energía del sistema, filas podadas, archivo parcial.
-- **No evaluable:** sin zona confirmada o con menos de 2 filas con instante exacto.
+- **Mediana del intervalo** (/2): con un número par de intervalos, el menor de los dos centrales (antes el mayor).
+- **No evaluable:** con menos de 2 filas con instante exacto, o sin zona confirmada **si alguna fila depende de la
+  zona** (no tiene `ObservedAtUtc`): faltaría en los intervalos y daría huecos falsos. Un historial de 3.0 o posterior
+  con `ObservedAtUtc` en todas las filas se muestrea igual con la zona sin confirmar (/2; antes, «sin zona»).
 - **No permite concluir:** la causa de un hueco ni que durante él ocurriera algo.
 
 ## DESC-CELLS/1 · Celdas servidoras observadas
@@ -100,14 +111,16 @@ para descartar valores imposibles, no límites normativos.
 - **No evaluable:** sin valores válidos.
 - **No permite concluir:** que una potencia alta o baja sea anómala.
 
-## COH-TA/1 · Coherencia de Timing Advance
+## COH-TA/2 · Coherencia de Timing Advance
 
 - **Pregunta:** ¿es coherente `TAMeters` con `TA` y `TAUnit` según la conversión que documenta la
   exportación?
 - **Datos:** `TA`, `TAUnit`, `TAMeters`.
 - **Calcula:** filas con TA; reparto por unidad; filas donde `TAMeters` ≠ TA×78 (`LTE_INDEX`), ≠ TA×554
   (`GSM_INDEX`) o no vacío para otras unidades. Los factores son los de la exportación descrita en
-  export-formats.md §1.3 (pasos de TA de 3GPP redondeados); no se recalcula nada.
+  export-formats.md §1.3 (pasos de TA de 3GPP redondeados); no se recalcula nada. Sin `TAMeters` (vacío, o anulado
+  al fusionar dos exportaciones que no coinciden en ese valor) no hay nada que comparar (/2; antes contaba como
+  incoherente).
 - **Evidencia:** filas incoherentes.
 - **Alternativas:** exportación de otra versión con otra regla, edición manual del archivo.
 - **No evaluable:** sin filas con TA.
@@ -123,7 +136,7 @@ para descartar valores imposibles, no límites normativos.
 - **Verificación retirada (/2):** ICdetector 3.1.0 quitó la consulta a OpenCellID. Sus filas llevan siempre
   `Verified` = `PENDING` y `ApiLat`/`ApiLon` vacías, sin nada pendiente. Las filas con `AppVersion` 3.1.0 o
   posterior se cuentan aparte como «sin verificación externa (retirada)», en el anexo del historial y en las
-  limitaciones, y no se comparan con otras fuentes (`cross/3`). Con un historial mixto, el informe lo explica en
+  limitaciones, y no se comparan con otras fuentes (`cross/3` y posteriores). Con un historial mixto, el informe lo explica en
   una frase. Las filas sin `AppVersion` (2.10.x) se tratan como antes.
 - **Evidencia:** filas con motivo sin prefijo y con `[sub-umbral]`.
 - **Alternativas:** las heurísticas de ICdetector no están calibradas; sus motivos son resultados de
@@ -164,11 +177,12 @@ para descartar valores imposibles, no límites normativos.
 - **No cambia:** CellCase no recalcula nada ni corrige valores; las prioridades de los episodios no cambian.
 - **No permite concluir:** que un cambio de esos campos entre tramos se deba a la red.
 
-## COH-DUP/1 · Duplicados y posibles revisiones
+## COH-DUP/2 · Duplicados y posibles revisiones
 
 - **Pregunta:** ¿hay filas repetidas?
 - **Datos:** contenido completo de cada fila; hora + identidad completa.
-- **Calcula:** filas idénticas; filas con misma hora e identidad y contenido distinto.
+- **Calcula:** filas idénticas; filas con misma hora e identidad y contenido distinto. La «misma hora» es el mismo
+  `ObservedAtUtc` cuando lo hay (/2), como en el importador: las dos filas de la hora repetida de octubre no lo son.
 - **Evidencia:** pares de filas.
 - **Alternativas:** doble escritura legítima (handover y alarma en el mismo segundo), revisión de
   columnas actualizadas después (`Verified`, `ApiLat`…).

@@ -1,6 +1,6 @@
 # CellCase · User manual
 
-Version 0.2.0 · rules `cellcase-rules/2 · episodes/6 · cross/3` · readers `readers/2.4.1`
+Version 0.2.0 · rules `cellcase-rules/3 · episodes/7 · cross/4` · readers `readers/2.4.1`
 
 This manual explains how to use CellCase, how to read what it shows and what its reports can and cannot say. For what the app is and how to build it, see the [README](README.md). For the rules in detail, see the documents under [`docs/`](docs/).
 
@@ -202,7 +202,7 @@ Tap **Generate PDF**. The report is stored inside the case with its mode, langua
 10. **Methodology**, 11. **Conclusion and next steps**, 12. **Limitations**, 13. **Analyst's notes**.
 - **Annexes**: A. files, entries and integrity (SHA-256 of each file, `SHA256SUMS` results); B. validation issues per file; C. evidence references per episode; D. statistical description of the history; E. rules and thresholds; F. privacy and rounding applied; G. (optional) the full list of cross-checks.
 
-Every page carries the generation time, the CellCase version and the rule versions (`cellcase-rules/2 · episodes/6`), and a banner when the data are declared synthetic.
+Every page carries the generation time, the CellCase version and the rule versions (`cellcase-rules/3 · episodes/7`), and a banner when the data are declared synthetic.
 
 ### The cell churn section (H17)
 
@@ -233,9 +233,9 @@ In short (full rules in [`docs/episode-rules.md`](docs/episode-rules.md), [`docs
 
 **Episodes and groups.** Signals of the same cell and pattern within 30 minutes form an episode; a forensic case without identity links to what overlaps its window (±2 min); episodes within 15 minutes are shown as a group (G1, G2…) without merging. Radio joins an episode if a degraded state falls within 5 minutes. Signals within 60 s count as one moment; *persistence* is 3 or more moments over 10 minutes or more; *recurrence* is the same cell and pattern on 2 or more local dates.
 
-**CellCase's own checks.** Where the history allows it, CellCase verifies the pattern in the measurements: a band change against the previous row's band (within 10 minutes); an alternating PCI against the series of PCI per identity and carrier (±30 minutes; A→B→A or alternation is *visible*, A→B alone is partial); a power deviation against the cell's median (10 dB or more, with at least 5 rows). The result is one of *verified*, *not contradicted* or *not assessable*, and the last two are never confused.
+**CellCase's own checks.** Where the history allows it, CellCase verifies the pattern in the measurements: a band change against the previous row's band (within 10 minutes); an alternating PCI against the series of PCI per identity and carrier (±30 minutes; A→B→A or alternation is *visible*, A→B alone is partial); a power deviation against the cell's median (10 dB or more, with at least 5 rows; with an even number of rows, the lower of the two middle values). The result is one of *verified*, *not contradicted* or *not assessable*, and the last two are never confused.
 
-**Priority.** *Priority review* needs an ICdetector alarm (not sub-threshold, or a forensic case of origin `ALARM`), good data quality, behaviour verified in the measurements, and persistence or recurrence. *To review* needs an alarm, or verified behaviour with recurrence or persistence. Everything else is *Context*. Verification states (VERIFIED, NOT_FOUND…), how usual a cell is, and coincidence with Radio are reported but never change the priority. A sub-threshold signal never reaches priority review.
+**Priority.** *Priority review* needs an ICdetector alarm (not sub-threshold, or a forensic case of origin `ALARM`), good data quality, behaviour verified in the measurements, and persistence or recurrence. *To review* needs an alarm, or verified behaviour with recurrence or persistence. Everything else is *Context*. Verification states (VERIFIED, NOT_FOUND…), how usual a cell is, and coincidence with Radio are reported but never change the priority. A sub-threshold signal never reaches priority review. *Recurrence* means the same cell and pattern on at least two dates: the episode's own start date and the dates of signals outside the episode, so an episode that crosses midnight counts as one day. Dates are in the case's time zone (UTC if it is not confirmed).
 
 **Relevance.** Common network behaviours without alarm or forensic case are *insufficient evidence*. Alarms, forensic cases of origin `ALARM`, a drop to 2G/3G, and identity-related patterns (PCI, MCC/MNC, ciphering, TAC, TA, isolated cell, spectrum) are *observations that need more data*.
 
