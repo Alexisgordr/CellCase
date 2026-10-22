@@ -28,7 +28,7 @@ This manual explains how to use CellCase, how to read what it shows and what its
 CellCase does not capture anything by itself. It reads the files that [ICdetector](https://github.com/Alexisgordr/ICdetector) exports and turns them into a report. You need:
 
 - A phone with Android 8.0 or newer with CellCase installed.
-- One or more ICdetector exports (2.10.5, 3.0 or 3.1.0), or an ICdetector 3.0.0 or 3.1.0 backup (`.icdbackup`), copied to the phone where CellCase runs (it can be the same phone or another one).
+- One or more ICdetector exports (2.10.5, 3.0, 3.1.0 or 3.1.1), or an ICdetector 3.0.0, 3.1.0 or 3.1.1 backup (`.icdbackup`), copied to the phone where CellCase runs (it can be the same phone or another one).
 
 CellCase asks for no permissions and never connects to the network. Everything stays on the phone until you save a PDF somewhere.
 
@@ -36,11 +36,11 @@ CellCase asks for no permissions and never connects to the network. Everything s
 
 ## 2. Getting exports out of ICdetector
 
-The simplest way, with ICdetector 3.0.0 or 3.1.0, is one file:
+The simplest way, with ICdetector 3.0.0 or 3.1.x, is one file:
 
 - **Settings → Backup** in ICdetector creates an `ICdetection-backup-<date>-<time>.icdbackup` file that contains the whole database. CellCase extracts from it the same six exports that ICdetector would produce one by one.
 
-The individual exports (ICdetector 2.10.5, 3.0 or 3.1.0) also work, alone or combined:
+The individual exports (ICdetector 2.10.5, 3.0, 3.1.0 or 3.1.1) also work, alone or combined:
 
 | Export | Where in ICdetector | File name |
 |---|---|---|
@@ -55,9 +55,9 @@ CellCase recognises each file **by its content**, not by its name, so renamed fi
 
 ### What changes with ICdetector 3.1.0
 
-You import 3.1.0 files exactly as before; nothing has to be converted. A phone updated from 3.0 to 3.1.0 keeps its old rows, so one history or backup can contain rows of both versions; CellCase tells them apart by each row's `AppVersion`.
+You import 3.1.0 files exactly as before; nothing has to be converted. ICdetector 3.1.1 only fixes the app (first-run screen, notification icon): its exports and backups are the same as 3.1.0's, so everything below applies to it too. A phone updated from 3.0 to 3.1.0 keeps its old rows, so one history or backup can contain rows of both versions; CellCase tells them apart by each row's `AppVersion`.
 
-- **Backup.** The 3.1.0 backup uses database schema 26 (3.0.0 uses 25). Both are read. A backup from a version newer than 3.1.0 is not interpreted, and the message says why.
+- **Backup.** The 3.1.0 and 3.1.1 backups use database schema 26 (3.0.0 uses 25). Both are read. A backup from a version newer than 3.1.1 is not interpreted, and the message says why.
 - **Three new history columns** (at the end of the CSV), recorded by ICdetector's new rule **H17 Cell churn**:
   - `ChurnCells15m`: how many distinct cell identities served the phone in the previous 15 minutes;
   - `ChurnChanges15m`: how many serving-cell changes there were in those 15 minutes;

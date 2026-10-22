@@ -111,6 +111,9 @@ class Icd30ExportsTest {
         assertEquals(39L, Icd30Exports.knownVersionCode("3.0.0+f5173a8"))
         assertEquals(39L, Icd30Exports.knownVersionCode("3.0.0"))
         assertEquals(0L, Icd30Exports.knownVersionCode("3.0.1+abc"))
+        assertEquals(40L, Icd30Exports.knownVersionCode("3.1.0+90627b7"))
+        // ICdetector 3.1.1 (versionCode 41, mismo esquema 26 y mismas exportaciones que 3.1.0)
+        assertEquals(41L, Icd30Exports.knownVersionCode("3.1.1+8ec6f29"))
     }
 
     @Test fun csvTextGuardAndQuotesLikeIcdetector() {
