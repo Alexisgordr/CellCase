@@ -201,7 +201,11 @@ object CrossSources {
         // juntan resultados frente a fuentes B DISTINTAS (cross/4, B4): dos resultados frente a la misma fuente (las dos
         // versiones usadas de un caso forense frente al historial) son resultados distintos. Para eso cada resultado lleva
         // su número de orden entre los de igual clave y fuente B, en un orden que no depende del de importación.
-        fun mergeKey(f: CrossFinding) = listOf(f.check, f.outcome, f.reason, f.sourceA, f.entities, f.start, f.end, f.window, f.count, f.derivation, f.episodes.sorted(), f.next)
+        // Un resultado de un caso forense lleva en la clave el archivo del caso: dos versiones del mismo caso (mismo código,
+        // mismas entidades) nunca se juntan, aunque cada una tenga resultados frente a agregados distintos (verificación).
+        val caseFiles = i.forensic.map { it.second }.toSet()
+        fun mergeKey(f: CrossFinding) = listOf(f.check, f.outcome, f.reason, f.sourceA, f.entities, f.start, f.end, f.window, f.count, f.derivation,
+            f.episodes.sorted(), f.next, if (f.sourceA == ExportKind.FORENSIC_CASE) f.files.filter { it in caseFiles }.sorted() else emptyList<String>())
         val ordinal = java.util.IdentityHashMap<CrossFinding, Int>()
         out.groupBy { mergeKey(it) to it.sourceB }.values.forEach { same ->
             same.sortedWith(compareBy<CrossFinding>({ it.files.sorted().joinToString("\u0000") }, { it.refs.sortedWith(provOrder).joinToString() }))
@@ -236,7 +240,6 @@ object CrossSources {
             while (k < times.size && !times[k].isAfter(to)) { out += rows[k]; k++ }
             return out
         }
-        /** Filas del historial sin instante único cuya hora local podría caer en [from, to] (ambiguas o sin zona). */
         /**
          * Filas que no se pueden situar sin la zona (sin `ObservedAtUtc` y con la zona sin confirmar) y que, con cualquier
          * desfase horario (UTC−12 a UTC+14), podrían caer en [from, to]. Solo ellas impiden comparar (cross/4, B2): una
@@ -248,6 +251,7 @@ object CrossSources {
         private val unzoned: List<java.time.LocalDateTime> =
             if (i.zoneConfirmed) emptyList() else i.history.filter { it.time.resolution is TimeResolution.NoConfirmedZone }.mapNotNull { it.time.local }
 
+        /** Filas del historial sin instante único cuya hora local podría caer en [from, to] (ambiguas o sin zona). */
         fun unplacedNear(from: Instant, to: Instant): List<HistoryObservation> = i.history.filter { o ->
             when (val r = o.time.resolution) {
                 is TimeResolution.Ambiguous -> !r.later.isBefore(from) && !r.earlier.isAfter(to)
@@ -323,7 +327,8 @@ object CrossSources {
                     // Frontera simétrica (cross/4, B6): a ≤ 60 s de un CAMBIO de estado de Radio (un evento cuyo estado
                     // difiere del anterior), la fila no se compara, coincida o no; la hora del historial es de inserción y
                     // tiene resolución de segundos. Un evento cercano que repite el estado (sondeo) no es un cambio.
-                    fun changeAt(k: Int) = k in 1 until ev.size && ev[k].state != ev[k - 1].state
+                    // El primer evento también: no se sabe qué estado había antes (verificación).
+                    fun changeAt(k: Int) = k == 0 || (k in 1 until ev.size && ev[k].state != ev[k - 1].state)
                     val nearChange = (idx downTo 0).asSequence().takeWhile { Duration.between(ev[it].time, t) <= TRANSITION_TOLERANCE }.any { changeAt(it) } ||
                         (idx + 1 until ev.size).asSequence().takeWhile { Duration.between(t, ev[it].time) <= TRANSITION_TOLERANCE }.any { changeAt(it) }
                     when {

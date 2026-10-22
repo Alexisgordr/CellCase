@@ -50,8 +50,9 @@ exportado: filas por tabla, tamaño, y el presupuesto de historial del expedient
 cuyas tablas tienen filas. Lo que se conserva como original es la copia, con su huella; las partes constan en el
 informe (tabla de archivos, integridad y anexo), con el aviso de que se han reconstruido.
 
-El límite de bytes de cada parte (el de su archivo exportado) se aplica **mientras** se leen sus tablas y se escribe
-el CSV, no después de montarlo en memoria (D-060). La reconstrucción consulta la cancelación dentro de sus bucles.
+El límite de bytes de cada parte se aplica **mientras** se leen sus tablas y se escribe el CSV, no después de montarlo
+en memoria (D-060, D-063): el historial, el de un historial exportado (leyendo como mucho el doble); las demás partes,
+32 MiB leídos de sus tablas y después el límite de su archivo exportado. La reconstrucción consulta la cancelación dentro de sus bucles.
 
 Los casos forenses se construyen de uno en uno, al leerlos. Un caso cuyo `payload_json` suma más de lo que cabe
 descomprimido en un ZIP exportado (`ZipLimits.maxTotalBytes`, 8 MiB) no se carga: queda como parte «demasiado

@@ -28,8 +28,12 @@ class Icd30Exports(
      * este tope (tienen columnas que no se exportan) y el CSV se corta en cuanto lo pasa.
      */
     private val maxHistoryBytes: Long = Long.MAX_VALUE,
-    /** Igual para el resto de partes (Radio, Topología, Geometría, Stable-Site, lista de casos forenses). */
-    private val maxPartBytes: Long = Long.MAX_VALUE,
+    /**
+     * Bytes máximos que se leen de las tablas del resto de partes (Radio, Topología, Geometría, Stable-Site, lista de
+     * casos forenses). Es un tope de LECTURA, no de salida: Stable-Site exporta recuentos de tablas que pueden ser mucho
+     * mayores que su ZIP, así que no se deriva del límite del ZIP (verificación de A3); la salida se comprueba después.
+     */
+    private val maxPartReadBytes: Long = Long.MAX_VALUE,
     /** Cancelación: se consulta mientras se leen las tablas, no solo entre partes (A4). */
     private val checkpoint: com.alexisgordr.cellcase.core.importing.Checkpoint = com.alexisgordr.cellcase.core.importing.Checkpoint.NONE
 ) {
@@ -45,9 +49,9 @@ class Icd30Exports(
     private var partRawLimit = Long.MAX_VALUE
     private var partLimit = Long.MAX_VALUE
 
-    private inline fun <T> part(limit: Long, block: () -> T): T {
-        partRead = 0; partLimit = limit
-        partRawLimit = if (limit >= Long.MAX_VALUE / RAW_FACTOR) Long.MAX_VALUE else limit * RAW_FACTOR
+    /** [limit]: tope de la salida (el CSV se corta al pasarlo); [rawLimit]: tope de lo leído de las tablas. */
+    private inline fun <T> part(limit: Long, rawLimit: Long, block: () -> T): T {
+        partRead = 0; partLimit = limit; partRawLimit = rawLimit
         try { return block() } finally { partRead = 0; partLimit = Long.MAX_VALUE; partRawLimit = Long.MAX_VALUE }
     }
 
@@ -67,7 +71,7 @@ class Icd30Exports(
             out += r
             if (out.size > maxRows) throw TooManyRows(name, out.size)
             partRead += rowBytes(r)
-            if (partRead > partRawLimit) throw PartTooLarge(name, partRead, partLimit)
+            if (partRead > partRawLimit) throw PartTooLarge(name, partRead, partRawLimit)
             if (out.size and 1023 == 0) checkpoint.check()
         }
         return Rows(t, out)
@@ -84,7 +88,7 @@ class Icd30Exports(
      * columnas del churn (esquema 26, ICdetector 3.1.0), las 3 de 3.1.0 al final. Se decide por las columnas de la
      * tabla, no por el número de esquema. Null si no hay tabla `history`.
      */
-    fun historyCsv(): ByteArray? = part(maxHistoryBytes) { buildHistoryCsv() }
+    fun historyCsv(): ByteArray? = part(maxHistoryBytes, if (maxHistoryBytes >= Long.MAX_VALUE / RAW_FACTOR) Long.MAX_VALUE else maxHistoryBytes * RAW_FACTOR) { buildHistoryCsv() }
 
     private fun buildHistoryCsv(): ByteArray? {
         val h = load("history") ?: return null
@@ -140,7 +144,7 @@ class Icd30Exports(
 
     // ───────────────────────── Radio (ExportUtils.serviceStateCsvRow, CellDbHelper.getServiceStateEvents) ─────────────────────────
 
-    fun serviceStateCsv(): ByteArray? = part(maxPartBytes) { buildServiceStateCsv() }
+    fun serviceStateCsv(): ByteArray? = part(maxPartReadBytes, maxPartReadBytes) { buildServiceStateCsv() }
 
     private fun buildServiceStateCsv(): ByteArray? {
         val t = load("service_state_events") ?: return null
@@ -186,7 +190,7 @@ class Icd30Exports(
         }
     }
 
-    fun topology(): LinkedHashMap<String, ByteArray>? = part(maxPartBytes) { buildTopology() }
+    fun topology(): LinkedHashMap<String, ByteArray>? = part(maxPartReadBytes, maxPartReadBytes) { buildTopology() }
 
     private fun buildTopology(): LinkedHashMap<String, ByteArray>? {
         val tr = routes() ?: return null
@@ -233,7 +237,7 @@ class Icd30Exports(
 
     // ───────────────────────── geometría (GeometryExporter.buildFiles, MobilityGeometryProjection, MobilityFamiliarityPolicy) ─────────────────────────
 
-    fun geometry(): LinkedHashMap<String, ByteArray>? = part(maxPartBytes) { buildGeometry() }
+    fun geometry(): LinkedHashMap<String, ByteArray>? = part(maxPartReadBytes, maxPartReadBytes) { buildGeometry() }
 
     private fun buildGeometry(): LinkedHashMap<String, ByteArray>? {
         val tr = routes() ?: return null
@@ -316,7 +320,7 @@ class Icd30Exports(
 
     // ───────────────────────── Stable-Site (CellDbHelper.getStableSiteExportFiles, StableSiteMaturityPolicy, StableSiteExportNote) ─────────────────────────
 
-    fun stableSite(): LinkedHashMap<String, ByteArray>? = part(maxPartBytes) { buildStableSite() }
+    fun stableSite(): LinkedHashMap<String, ByteArray>? = part(maxPartReadBytes, maxPartReadBytes) { buildStableSite() }
 
     private fun buildStableSite(): LinkedHashMap<String, ByteArray>? {
         val ev = load("site_cell_evidence") ?: return null
@@ -419,7 +423,7 @@ class Icd30Exports(
      * Un ZIP por caso, del más reciente al más antiguo (`ORDER BY c.id DESC`). Una muestra ilegible lanza
      * [AndroidJson.ParseException] al construir ese caso, no al listar.
      */
-    fun forensicCases(): List<ForensicExport>? = part(maxPartBytes) { buildForensicCases() }
+    fun forensicCases(): List<ForensicExport>? = part(maxPartReadBytes, maxPartReadBytes) { buildForensicCases() }
 
     private fun buildForensicCases(): List<ForensicExport>? {
         val cases = load("forensic_cases") ?: return null
@@ -619,10 +623,10 @@ class Icd30Exports(
             x.size - y.size
         }
 
-        /** `versionCode` de las versiones publicadas que conoce CellCase (la copia no lo guarda). 0 si no se conoce. */
-        /** Las tablas de una parte pueden ocupar al leerlas hasta este múltiplo del tope de la parte (A3). */
+        /** Las tablas del historial pueden ocupar al leerlas hasta este múltiplo del tope de su CSV (A3). */
         const val RAW_FACTOR = 2L
 
+        /** `versionCode` de las versiones publicadas que conoce CellCase (la copia no lo guarda). 0 si no se conoce. */
         fun knownVersionCode(appVersion: String): Long = when (appVersion.substringBefore('+')) {
             "3.0.0" -> 39L
             "3.1.0" -> 40L

@@ -99,6 +99,24 @@ class EpisodeReviewTest {
         assertTrue(s.observationGroups.all { it.days == listOf(java.time.LocalDate.parse("2026-09-26")) })
     }
 
+    /**
+     * Verificación de B2: sin zona confirmada, una fila 2.10 (sin ObservedAtUtc) no tiene instante y su fecha local es del
+     * teléfono, no UTC; no forma episodio y tampoco debe contar para la recurrencia (salía «recurrente» sin episodio que citar).
+     */
+    @Test fun rowsThatDependOnTheZoneDoNotCountForRecurrenceWithoutConfirmedZone() {
+        val v3 = ",ObservedAtUtc,NotEvaluatedHeuristics,GpsAccuracyM,AppVersion,ExportDevice,ExportAndroid,LocationMode,ProfileMode,ProfileLevel," +
+            "ProfileScore,ProfileCoverage,ProfileAbstainReason,ProfileAlgorithm,ProfileRevision,ProfileEvidence,ProfileLearned,ProfileHoldout,RowId,ObservationId"
+        val old = TestSupport.row("2026-09-25 10:00:00", mapOf("FailedHeuristics" to band)) + ",,,,,,,,,,,,,,,,,,,"
+        val new = TestSupport.row("2026-09-27 10:00:00", mapOf("FailedHeuristics" to band)) + ",2026-09-27T08:00:00.000Z,NONE,,3.0.0+f5173a8,,,,,,,,,,,,,,2,obs-2"
+        val unconfirmed = com.alexisgordr.cellcase.core.time.DeclaredZone(java.time.ZoneId.of("Europe/Madrid"), confirmed = false)
+        val obs = (ImportPipeline.process((TestSupport.HEADER + v3 + "\n" + old + "\n" + new + "\n").toByteArray(), "h.csv", "h", unconfirmed).data
+            as ImportedData.History).data.observations
+        val s = EpisodeEngine.build(obs, emptyList(), emptyList(), null, null, null, java.time.ZoneOffset.UTC)
+        val e = s.episodes.single()
+        assertEquals(1, e.recurrenceDays)
+        assertTrue(e.recurrenceEpisodes.isEmpty())
+    }
+
     @Test fun sameLocalDayIsNotRecurrence() {
         val s = build(rows(
             TestSupport.row("2026-07-01 08:00:00", mapOf("FailedHeuristics" to band)),
@@ -199,5 +217,23 @@ class EpisodeReviewTest {
         assertEquals(Quality.LIMITED, n.quality)
         // sin caso, la misma alarma tiene calidad buena
         assertEquals(Quality.GOOD, build(cellA).episodes.single().quality)
+        // Dos casos sin identidad y sin código: solo cuenta el que R3 enlaza (antes los dos eran «?» y contaban los dos).
+        // El segundo es el mismo caso 20 min antes: dentro de la ventana de contexto (±30 min) pero no enlazado por R3.
+        fun case30(id: String, shift: Boolean): Pair<String, ForensicCaseData> {
+            val entries = LinkedHashMap<String, ByteArray>()
+            java.util.zip.ZipInputStream(TestSupport.sample("icd30/SYNTHETIC_icd30_ICD-2026-10-22-0001.zip").inputStream()).use { z ->
+                while (true) { val e = z.nextEntry ?: break; entries[e.name] = z.readBytes() } }
+            fun edit(n: String, f: (String) -> String) { entries[n] = f(String(entries.getValue(n))).toByteArray() }
+            edit("case.json") { it.replace("\"caseId\": \"ICD-2026-10-22-0001\"", "\"caseId\": null").replace("\"cellIdentity\": \"001-01-3001-1000070-LTE\"", "\"cellIdentity\": null") }
+            if (shift) for (n in listOf("timeline.csv", "cells.csv", "heuristics.csv", "trust_site.csv")) edit(n) { it.replace("T14:4", "T14:2").replace("T14:5", "T14:3") }
+            entries["SHA256SUMS.txt"] = entries.filterKeys { it != "SHA256SUMS.txt" }.entries.joinToString("") { (n, b) -> Hashing.sha256Hex(b) + "  " + n + "\n" }.toByteArray()
+            val out = java.io.ByteArrayOutputStream()
+            java.util.zip.ZipOutputStream(out).use { z -> entries.forEach { (n, b) -> z.putNextEntry(java.util.zip.ZipEntry(n)); z.write(b); z.closeEntry() } }
+            return id to (ImportPipeline.process(out.toByteArray(), "$id.zip", id, TestSupport.MADRID).data as ImportedData.Forensic).data
+        }
+        val linked = case30("f", shift = false); val earlier = case30("g", shift = true)
+        assertEquals(null, linked.second.meta.caseCode); assertEquals(null, earlier.second.meta.caseCode); assertEquals(null, earlier.second.meta.cellIdentity?.joinKey)
+        val both = build(rows(TestSupport.row("2026-10-22 16:52:00", mapOf("CID" to "5555555", "FailedHeuristics" to band.removePrefix("[sub-umbral] ")))), listOf(linked, earlier))
+        assertEquals(listOf("f"), both.episodes.single { it.signals.any { s -> s.row != null } }.forensicCaseIds)
     }
 }

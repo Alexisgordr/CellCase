@@ -104,4 +104,36 @@ class DetectionAndZipTest {
         assertTrue(!com.alexisgordr.cellcase.core.backup.IcdBackupReader.isBackup(big))
         listOf(big, out).forEach { it.delete() }
     }
+
+    /**
+     * Revisión de verificación (A1 bis): un ZIP con DOS firmas EOCD. La verdadera (la que usa `java.util.zip.ZipFile`,
+     * cuyo comentario llega justo al final) declara un directorio central enorme; dentro de su comentario hay otra EOCD
+     * falsa que apunta a un directorio pequeño con los nombres de una copia de seguridad. Antes se leía la falsa,
+     * `isBackup` daba true y ZipFile reservaba el directorio enorme (OutOfMemoryError con 64 MiB).
+     */
+    @Test fun aSecondFakeEocdInsideTheCommentDoesNotHideTheRealOne() {
+        fun le16(o: java.io.OutputStream, v: Int) { o.write(v and 0xFF); o.write((v ushr 8) and 0xFF) }
+        fun le32(o: java.io.OutputStream, v: Long) { le16(o, (v and 0xFFFF).toInt()); le16(o, ((v ushr 16) and 0xFFFF).toInt()) }
+        val z = 2L * 1024 * 1024    // mayor que MAX_CENTRAL_DIRECTORY_BYTES
+        val cd = java.io.ByteArrayOutputStream()
+        for (n in listOf("manifest.json", "icdetector_history.db")) {
+            le32(cd, 0x02014b50L); repeat(24) { cd.write(0) }
+            val nb = n.toByteArray(); le16(cd, nb.size); le16(cd, 0); le16(cd, 0); repeat(12) { cd.write(0) }; cd.write(nb)
+        }
+        val cdb = cd.toByteArray()
+        val fake = java.io.ByteArrayOutputStream().also { f ->
+            le32(f, 0x06054b50L); le16(f, 0); le16(f, 0); le16(f, 2); le16(f, 2); le32(f, cdb.size.toLong()); le32(f, z + 22); le16(f, 5) }
+        val comment = cdb + fake.toByteArray() + byteArrayOf(0)
+        val tail = java.io.ByteArrayOutputStream().also { t ->
+            le32(t, 0x06054b50L); le16(t, 0); le16(t, 0); le16(t, 1); le16(t, 1); le32(t, z); le32(t, 0); le16(t, comment.size); t.write(comment) }
+        val file = File.createTempFile("twoeocd", ".zip").also { it.deleteOnExit() }
+        java.io.RandomAccessFile(file, "rw").use { it.setLength(z); it.seek(z); it.write(tail.toByteArray()) }
+        try { SafeZip.centralDirectoryNames(file); fail("debía rechazarlo") } catch (e: ImportRejected) {
+            assertEquals(com.alexisgordr.cellcase.core.importing.RejectKind.ZIP_SECURITY, e.kind)
+        }
+        assertTrue(!com.alexisgordr.cellcase.core.backup.IcdBackupReader.isBackup(file))
+        assertEquals(com.alexisgordr.cellcase.core.importing.ImportState.ZIP_SECURITY,
+            com.alexisgordr.cellcase.core.backup.IcdBackupReader.read(file, "x.icdbackup", "x", null).state)
+        file.delete()
+    }
 }

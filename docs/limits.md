@@ -26,8 +26,8 @@ El 2/10/2026 se dio como razonable un límite de 16 MiB por archivo **sin medirl
 | ZIP descomprimido | 8 MiB | `ZipLimits` |
 | Entradas por ZIP | 64 | `ZipLimits` |
 | Ratio de compresión | 200 | `ZipLimits` |
-| Directorio central de un ZIP | 1 MiB | `SafeZip.MAX_CENTRAL_DIRECTORY_BYTES`: se lee el final del archivo y se comprueba antes de abrirlo con `ZipFile`, que reserva de golpe lo que declara el EOCD (D-059) |
-| Parte reconstruida de una copia | la de su archivo exportado (historial 16 MiB; el resto 8 MiB) | `BackupLimits.maxHistoryPartBytes` y `maxPartBytes`: se aplica mientras se leen las tablas (hasta el doble del tope, porque tienen columnas que no se exportan) y mientras se escribe el CSV, no después (D-060) |
+| Directorio central de un ZIP | 1 MiB | `SafeZip.MAX_CENTRAL_DIRECTORY_BYTES`: se lee el final del archivo y se comprueba antes de abrirlo con `ZipFile`, que reserva de golpe lo que declara el EOCD. Se comprueba en **todas** las firmas EOCD del final del archivo, no solo en la que se usa, porque `ZipFile` elige con sus propias reglas (D-059, D-063) |
+| Parte reconstruida de una copia | historial: su CSV ≤ 16 MiB, leyendo de las tablas como mucho 32 MiB; el resto: 32 MiB leídos de sus tablas, y después el límite de su archivo | `BackupLimits.maxHistoryPartBytes` y `maxPartReadBytes`: se aplican mientras se leen las tablas y se escribe el CSV, no después (D-060, D-063). El tope de lectura de las demás partes no se deriva de su ZIP porque Stable-Site exporta recuentos de tablas mayores |
 | **Historiales del expediente** | 40.000 filas en total | `CaseBudget` (también el historial de una copia de seguridad) |
 | **ZIP del expediente** | 8 MiB descomprimidos en total | `CaseBudget` |
 

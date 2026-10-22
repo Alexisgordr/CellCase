@@ -71,12 +71,23 @@ object SafeZip {
     private fun u16(b: ByteArray, i: Int) = (b[i].toInt() and 0xFF) or ((b[i + 1].toInt() and 0xFF) shl 8)
     private fun u32(b: ByteArray, i: Int) = u16(b, i).toLong() or (u16(b, i + 2).toLong() shl 16)
 
-    /** Posición del EOCD dentro de [b] (buscando hacia atrás, con el comentario máximo de 64 KiB), o -1. */
-    private fun findEocd(b: ByteArray): Int {
+    /** Posiciones de las firmas EOCD de [b], de la más cercana al final a la más lejana (comentario de hasta 64 KiB). */
+    private fun eocdCandidates(b: ByteArray): List<Int> {
+        val out = ArrayList<Int>()
         var i = b.size - EOCD_SIZE
         val lowest = maxOf(0, b.size - EOCD_SIZE - 0xFFFF)
-        while (i >= lowest) { if (u32(b, i) == EOCD_SIG) return i; i-- }
-        return -1
+        while (i >= lowest) { if (u32(b, i) == EOCD_SIG) out += i; i-- }
+        return out
+    }
+
+    /**
+     * El EOCD que usa `java.util.zip.ZipFile`: el más cercano al final cuyo comentario llega justo al final del archivo
+     * y, si ninguno lo cumple, el más cercano al final. Un comentario puede contener otra firma EOCD falsa (revisión de
+     * verificación, A1 bis): si se leyera esa, el cotejo no vería el directorio central que ZipFile reserva.
+     */
+    private fun findEocd(b: ByteArray): Int {
+        val all = eocdCandidates(b)
+        return all.firstOrNull { it + EOCD_SIZE + u16(b, it + 20) == b.size } ?: all.firstOrNull() ?: -1
     }
 
     /** Número de entradas, tamaño y posición del directorio central, comprobados frente a la posición del EOCD. */
@@ -125,6 +136,13 @@ object SafeZip {
         raf.seek(tailStart); raf.readFully(tail)
         val eocd = findEocd(tail)
         if (eocd < 0) throw ImportRejected(msg("import.u32.zip_truncado_o_danado_falta"), RejectKind.DAMAGED_ZIP)
+        // Ninguna firma EOCD que ZipFile pudiera aceptar (directorio central dentro del archivo, antes de la firma) puede
+        // declarar un directorio mayor que el tope, aunque no sea la que se usa aquí: ZipFile elige con sus propias reglas.
+        for (c in eocdCandidates(tail)) {
+            val size = u32(tail, c + 12); val off = u32(tail, c + 16)
+            if (off != 0xFFFFFFFFL && off + size <= tailStart + c && size > MAX_CENTRAL_DIRECTORY_BYTES)
+                throw ImportRejected(msg("import.zip.central_directory_too_large", size, MAX_CENTRAL_DIRECTORY_BYTES), RejectKind.ZIP_SECURITY)
+        }
         val (count, cdSize, cdOffset) = directory(tail, eocd, tailStart + eocd)
         if (cdSize > MAX_CENTRAL_DIRECTORY_BYTES)
             throw ImportRejected(msg("import.zip.central_directory_too_large", cdSize, MAX_CENTRAL_DIRECTORY_BYTES), RejectKind.ZIP_SECURITY)

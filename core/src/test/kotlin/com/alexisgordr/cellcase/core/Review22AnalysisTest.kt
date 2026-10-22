@@ -70,6 +70,12 @@ class Review22AnalysisTest {
         // Cada resultado X-FOR viene de una sola versión del caso
         for (f in xfor) assertTrue(f.files.toString(), listOf("c1.zip", "c2.zip").count { it in f.files } == 1)
         assertTrue(xfor.any { "c1.zip" in it.files } && xfor.any { "c2.zip" in it.files })
+        // Tampoco frente a los agregados: ningún resultado de un caso forense cita las dos versiones a la vez
+        // (verificación: con el número de orden por fuente B, la v2 frente a Topología y la v1 frente a Geometría se juntaban).
+        val withAggregates = CaseAnalyzer.analyze(r + listOf("SYNTHETIC_ICD-topology.zip", "SYNTHETIC_ICD-geometry.zip", "SYNTHETIC_ICD-stable-site.zip")
+            .map { ImportPipeline.process(s(it), it, it, TestSupport.MADRID) }, TestSupport.MADRID, null).cross!!.findings
+        for (f in withAggregates.filter { it.sourceA == com.alexisgordr.cellcase.core.importing.ExportKind.FORENSIC_CASE })
+            assertTrue(f.toString(), listOf("c1.zip", "c2.zip").count { it in f.files } <= 1)
     }
 
     /**

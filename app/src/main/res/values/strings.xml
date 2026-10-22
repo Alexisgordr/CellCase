@@ -157,6 +157,7 @@
     <string name="notice_create_failed">The case could not be created: %1$s</string>
     <string name="notice_case_deleted">Case deleted.</string>
     <string name="notice_delete_failed">It could not be deleted: %1$s</string>
+    <string name="busy_saving">Saving the case</string>
     <string name="busy_loading">Loading and analysing the case</string>
     <string name="busy_reanalysing">Recalculating the joint analysis…</string>
     <string name="busy_verifying">Checking the copies of the originals</string>

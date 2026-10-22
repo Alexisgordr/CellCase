@@ -294,8 +294,10 @@ object EpisodeEngine {
         // y los grupos de observaciones (revisión 22/10, B2). Sin zona confirmada, [zone] es UTC, como el resto del informe.
         fun day(t: Instant): LocalDate = t.atZone(zone).toLocalDate()
         // Una fila sin instante único (hora repetida de octubre sin ObservedAtUtc) no forma episodio, pero su fecha
-        // local no es ambigua y cuenta para la recurrencia.
-        fun rowDay(o: HistoryObservation): LocalDate? = o.time.instantOrNull?.let(::day) ?: o.time.local?.toLocalDate()
+        // local no es ambigua y cuenta para la recurrencia. Sin zona confirmada, en cambio, la fecha local de una fila sin
+        // ObservedAtUtc es la del teléfono y no la de [zone] (UTC): no se cuenta (verificación de B2).
+        fun rowDay(o: HistoryObservation): LocalDate? = o.time.instantOrNull?.let(::day)
+            ?: if (o.time.resolution is com.alexisgordr.cellcase.core.time.TimeResolution.NoConfirmedZone) null else o.time.local?.toLocalDate()
 
         // Recurrencia entre días: (celda, tipo de patrón) → filas del colector con su fecha. Se guarda la fila para no
         // contar las del propio episodio (B1: un episodio que cruza la medianoche no es recurrente por sí solo).
@@ -348,9 +350,11 @@ object EpisodeEngine {
         // en la ventana de contexto (episodes/7, B6), porque entonces forma su propio episodio. Enlazado así, no se sabe
         // de qué celda es y la calidad queda limitada.
         val idKeys = ids.mapNotNull { it.joinKey }.toSet()
-        val linkedCaseCodes = g.filter { it.source == SignalSource.FORENSIC_CASE }.map { it.text }.toSet()
+        // Se reconoce el caso por la procedencia de sus muestras (archivo y línea), no por su código: dos casos sin
+        // código caerían en el mismo «?» (verificación).
+        val linkedCaseRefs = g.filter { it.source == SignalSource.FORENSIC_CASE }.flatMap { it.refs }.toSet()
         val forensicInWindow = forensic.filter { (_, c) -> c.start != null && !c.start!!.isAfter(winEnd) && !(c.end ?: c.start!!).isBefore(winStart) }
-            .filter { (_, c) -> c.meta.cellIdentity?.joinKey.let { k -> if (k == null) (c.meta.caseCode ?: "?") in linkedCaseCodes else k in idKeys } }
+            .filter { (_, c) -> c.meta.cellIdentity?.joinKey.let { k -> if (k == null) c.samples.firstOrNull()?.provenance in linkedCaseRefs else k in idKeys } }
         val forensicWithoutIdentity = forensicInWindow.any { (_, c) -> c.meta.cellIdentity?.joinKey == null }
         val forensicIds = forensicInWindow.map { it.first }
         val radios = (ids.map { it.radio } + during.map { it.identity.radio }).filter { it != RadioTech.UNKNOWN }.toSet()

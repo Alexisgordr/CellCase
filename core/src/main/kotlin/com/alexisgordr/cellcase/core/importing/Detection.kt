@@ -46,7 +46,12 @@ object FormatDetector {
 
     /** Detección de un CSV por su primera línea (sin BOM). */
     fun detectCsv(firstLine: String): Detection {
-        val l = firstLine.removePrefix("﻿").trimEnd('\r')
+        // Los nombres se leen como campos CSV (verificación de A5): una cabecera con algún nombre entre comillas es la
+        // misma cabecera. Si la línea no se puede leer como CSV, se compara tal cual.
+        val raw = firstLine.removePrefix("\uFEFF").trimEnd('\r')
+        val l = try {
+            com.alexisgordr.cellcase.core.csv.CsvReader(raw.reader()).next()?.fields?.joinToString(",") ?: raw
+        } catch (_: com.alexisgordr.cellcase.core.csv.CsvFormatException) { raw }
         return when {
             l.startsWith(HISTORY_PREFIX) -> Detection(ExportKind.HISTORY, msg("import.detectCsv.la_cabecera_empieza_por_las"))
             l == SERVICE_STATE_HEADER -> Detection(ExportKind.SERVICE_STATE, msg("import.detectCsv.la_cabecera_coincide_con_la"))

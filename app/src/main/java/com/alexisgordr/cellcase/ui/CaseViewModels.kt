@@ -215,18 +215,19 @@ class CaseViewModel(app: Application) : AndroidViewModel(app) {
     /** Guarda y, si el cambio afecta al análisis (zona, periodo), lo recalcula desde los originales. */
     fun saveCase(update: (CaseRecord) -> CaseRecord, reanalyze: Boolean = false) {
         val s = _snapshot.value ?: return
-        // Mientras hay un trabajo en curso el snapshot puede cambiar; los editores se desactivan y aquí no se guarda.
-        if (session.busy) { _notice.value = Notice(UiText.res(R.string.notice_busy), true); return }
         val updated = update(s.case)
-        viewModelScope.launch {
-            // Un expediente borrado (UserFacingException) o un disco lleno (SQLiteException) dan un aviso, no un cierre.
-            val affects = guardedCall(::failed) { withContext(Dispatchers.IO) { repo.updateCase(updated) } } ?: return@launch
-            if (!session.isCurrent(updated.id)) return@launch
-            // Sobre el valor ACTUAL, no sobre la copia de antes de guardar (revisión 22/10, C5): un trabajo que haya
-            // publicado entretanto (un informe nuevo, una recarga) no se pierde, y la edición tampoco.
+        // El guardado es un trabajo más de la sesión (revisión de verificación, C5): mientras dura, no puede arrancar
+        // otro (un informe con la configuración anterior, una recarga que publique el expediente antiguo), y si hay que
+        // recalcular se hace dentro del mismo trabajo, no con otro que chocaría con este. [run] también rechaza el
+        // guardado si ya hay un trabajo en curso, y convierte un error (expediente borrado, disco lleno) en un aviso.
+        run(UiText.res(R.string.busy_saving)) { cp, detail ->
+            val affects = withContext(Dispatchers.IO) { repo.updateCase(updated) }
+            if (!session.isCurrent(updated.id)) return@run
             _snapshot.update { cur -> if (cur?.case?.id == updated.id) cur.copy(case = updated) else cur }
             if (reanalyze || affects) {
-                reload()
+                detail(UiText.res(R.string.busy_loading))
+                val snap = withContext(Dispatchers.IO) { repo.snapshot(updated.id, cp, detail) }
+                session.publishIfCurrent(updated.id) { _snapshot.value = snap }
                 if (s.reports.isNotEmpty()) _notice.value = Notice(UiText.res(R.string.notice_reanalysed), false)
             }
         }

@@ -167,6 +167,12 @@ class HistoryImportTest {
         val imp = importHistory("\uFEFF\"" + first + "\"" + body.removePrefix(first))
         assertEquals(1, imp.observations.size)
         assertTrue(imp.issues.any { it.code == "BOM" })
+        // Y por la importación completa: la detección de formato también acepta la cabecera entre comillas (verificación)
+        for (text in listOf("\uFEFF\"" + first + "\"" + body.removePrefix(first), "\"" + first + "\"" + body.removePrefix(first))) {
+            val r = com.alexisgordr.cellcase.core.importing.ImportPipeline.process(text.toByteArray(), "h.csv", "h", TestSupport.MADRID)
+            assertEquals(com.alexisgordr.cellcase.core.importing.ExportKind.HISTORY, r.kind)
+            assertTrue(r.state.name, r.imported)
+        }
     }
 
     @Test fun emptyFileIsRejected() {

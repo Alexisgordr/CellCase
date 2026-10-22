@@ -243,6 +243,11 @@ class BackupImportTest {
         assertEquals(ImportState.TOO_LARGE, r.backupParts.single { it.kind == ExportKind.HISTORY }.state)
         assertTrue(r.backupParts.filter { it.kind != ExportKind.HISTORY }.all { it.imported })
         assertTrue(r.issues.any { it.code == "BACKUP_PART_NOT_IMPORTED" })
+        // Las demás partes llevan un tope de LECTURA propio, no derivado de su ZIP (Stable-Site exporta recuentos de tablas
+        // mayores que el ZIP): con uno diminuto se corta Stable-Site; el historial no depende de él.
+        val tiny = IcdBackupReader.read(backup(), "c", "c", TestSupport.MADRID, tempDir = tmp, limits = BackupLimits(maxPartReadBytes = 500))
+        assertEquals(ImportState.TOO_LARGE, tiny.backupParts.single { it.kind == ExportKind.STABLE_SITE }.state)
+        assertTrue(tiny.backupParts.single { it.kind == ExportKind.HISTORY }.imported)
         // Los límites por defecto no cambian nada en una copia normal
         assertTrue(IcdBackupReader.read(backup(), "c", "c", TestSupport.MADRID, tempDir = tmp).backupParts.all { it.imported })
         assertTrue(tmp.listFiles()!!.isEmpty())

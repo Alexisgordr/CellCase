@@ -156,6 +156,7 @@
     <string name="notice_create_failed">No se pudo crear el expediente: %1$s</string>
     <string name="notice_case_deleted">Expediente eliminado.</string>
     <string name="notice_delete_failed">No se pudo eliminar: %1$s</string>
+    <string name="busy_saving">Guardando el expediente</string>
     <string name="busy_loading">Cargando y analizando el expediente</string>
     <string name="busy_reanalysing">Recalculando el análisis conjunto…</string>
     <string name="busy_verifying">Comprobando copias de los originales</string>

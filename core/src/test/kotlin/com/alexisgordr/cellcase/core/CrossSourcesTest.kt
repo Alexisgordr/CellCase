@@ -449,5 +449,8 @@ class CrossSourcesTest {
         assertEquals(CrossOutcome.MATCH to CrossReason.SAME_VALUE, reason("2026-09-26 10:05:00", "OUT_OF_SERVICE"))
         // 07:30 es un sondeo con el mismo estado: no es un cambio, así que a 20 s sigue siendo coincidencia
         assertEquals(CrossOutcome.MATCH to CrossReason.SAME_VALUE, reason("2026-09-26 09:30:20", "IN_SERVICE"))
+        // El primer evento de Radio cuenta como cambio (no se sabe el estado anterior): a 30 s de él, coincida o no, frontera
+        assertEquals(boundary, reason("2026-09-26 09:00:30", "OUT_OF_SERVICE"))
+        assertEquals(boundary, reason("2026-09-26 09:00:30", "IN_SERVICE"))
     }
 }

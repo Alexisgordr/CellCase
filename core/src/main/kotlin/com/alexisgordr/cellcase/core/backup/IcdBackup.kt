@@ -69,8 +69,12 @@ data class BackupLimits(
      * escribe el CSV (revisión 22/10, A3), no después de montarlo en memoria.
      */
     val maxHistoryPartBytes: Long = ImportLimits.MAX_HISTORY_FILE_BYTES,
-    /** Igual para las demás partes: el mayor de un archivo exportado y de un ZIP descomprimido. */
-    val maxPartBytes: Long = maxOf(ImportLimits.MAX_FILE_BYTES, ZipLimits().maxTotalBytes)
+    /**
+     * Bytes que se pueden leer de las tablas de las demás partes. Es un tope de memoria al leer, no de salida (la salida
+     * tiene después el límite de su archivo): Stable-Site exporta recuentos de tablas que pueden ser mucho mayores que su
+     * ZIP. Con el límite de 60.000 filas por tabla, una copia real queda muy por debajo.
+     */
+    val maxPartReadBytes: Long = 32L * 1024 * 1024
 )
 
 /** Lo que dice el manifiesto y lo comprobado sobre la base. */
@@ -250,7 +254,7 @@ object IcdBackupReader {
     private fun parts(db: SqliteFile, info: BackupInfo, at: Instant, fileName: String, importId: String, zone: DeclaredZone?,
                       cp: Checkpoint, budget: CaseBudget?, issues: IssueCollector, limits: BackupLimits): List<ImportResult> {
         val ex = Icd30Exports(db, info.appVersion ?: "unknown", at.toEpochMilli(), maxRows = limits.maxRows,
-            maxHistoryBytes = limits.maxHistoryPartBytes, maxPartBytes = limits.maxPartBytes, checkpoint = cp)
+            maxHistoryBytes = limits.maxHistoryPartBytes, maxPartReadBytes = limits.maxPartReadBytes, checkpoint = cp)
         val out = ArrayList<ImportResult>()
         fun rows(t: String) = info.tables[t] ?: 0L
         fun name(n: String) = "$fileName › $n"
