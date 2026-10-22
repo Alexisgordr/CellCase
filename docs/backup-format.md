@@ -96,7 +96,7 @@ privacidad y columnas del esquema con el código de ICdetector.
 **Límite**: todo lo anterior es con datos sintéticos. Falta contrastar una copia real con las exportaciones que haga
 el mismo teléfono en el mismo momento.
 
-## 7. Esquema 26 (ICdetector 3.1.0 y 3.1.1, D-057, D-064)
+## 7. Esquema 26 (ICdetector 3.1.0 a 3.1.2, D-057, D-064, D-065)
 
 ICdetector 3.1.0 (`versionCode` 40, `appVersion` `3.1.0+90627b7`) escribe el mismo ZIP con el mismo `format` (1);
 solo cambia la base. `SchemaV26` (`storage/CellDbHelper.kt`) añade a `history` tres columnas con `ALTER TABLE`:
@@ -132,3 +132,7 @@ claves del caso forense con el código de ICdetector `v3.1.0`. Igual que en §6:
 3.1.0. Entre las dos etiquetas no cambia ningún archivo de exportación, de copia ni de esquema (`utils/ExportUtils.kt`,
 `forensics/`, `backup/`, `storage/CellDbHelper.kt`); solo arreglos de la app. CellCase la lee igual; lo único que conoce
 de ella es su `versionCode` (41), que escribe en el `case.json` de los casos forenses reconstruidos.
+
+**ICdetector 3.1.2** (`versionCode` 42, etiqueta `v3.1.2`, commit `0e8f8fa`): igual. Entre `v3.1.1` y `v3.1.2` solo
+cambian la pantalla de Topología (cada filtro muestra cuántas rutas tiene) y sus textos; ningún archivo de exportación,
+copia o esquema. CellCase escribe su `versionCode` (42) en los casos forenses reconstruidos.

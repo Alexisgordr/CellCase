@@ -14,7 +14,7 @@
   <p>
     <a href="MANUAL.md"><strong>User manual</strong></a> ·
     <a href="#documentation">Design documents</a> ·
-    <a href="https://github.com/Alexisgordr/ICdetector">ICdetector</a> (supported up to 3.1.1)
+    <a href="https://github.com/Alexisgordr/ICdetector">ICdetector</a> (supported up to 3.1.2)
   </p>
 </div>
 
@@ -22,7 +22,7 @@
 
 ## What it is
 
-[ICdetector](https://github.com/Alexisgordr/ICdetector) watches a phone's connection to cell towers and records anything that looks unusual. CellCase 0.2.0 reads its exports from 2.10.5 up to 3.1.1, the current version. CellCase is its companion: an independent Android app that **imports those exports, validates them, keeps their provenance and writes a technical report in PDF** that answers one question honestly:
+[ICdetector](https://github.com/Alexisgordr/ICdetector) watches a phone's connection to cell towers and records anything that looks unusual. CellCase 0.2.0 reads its exports from 2.10.5 up to 3.1.2, the current version. CellCase is its companion: an independent Android app that **imports those exports, validates them, keeps their provenance and writes a technical report in PDF** that answers one question honestly:
 
 > *What do these data allow us to conclude about possible fake base stations (IMSI catchers), and what should be checked next?*
 
@@ -32,8 +32,8 @@ It is designed for the person who captured the data, for whoever helps them read
 
 - **Two reports from one analysis.** A *plain-language* report (2–3 pages, for people without technical knowledge) and a *full technical* report (incidents, measurements, methodology, sources, hashes and rules). Both reach the same conclusion; only the presentation changes.
 - **Honest by design.** CellCase never claims to have found an IMSI catcher. It separates *what ICdetector recorded* from *what CellCase verified in the measurements*, and *not assessable* from *not contradicted*. Specialist attribution criteria are explicitly marked as not evaluated.
-- **Every ICdetector export, including the 3.0 and 3.1.x backups.** History, Radio, Topology, Stable-Site, Geometry and forensic cases (CSV and ZIP, from 2.10.x, 3.0, 3.1.0 and 3.1.1), or a single `.icdbackup` file that contains all of them, read with a built-in SQLite reader.
-- **Ready for ICdetector 3.1.x.** 3.1.1 only fixes the app and keeps the 3.1.0 formats. The new cell-churn columns (H17) are shown as shadow context in the technical report, without thresholds and without affecting any assessment; the retired external verification and the 3.1.0 dataset cut are explained instead of being misread.
+- **Every ICdetector export, including the 3.0 and 3.1.x backups.** History, Radio, Topology, Stable-Site, Geometry and forensic cases (CSV and ZIP, from 2.10.x, 3.0 and 3.1.x up to 3.1.2), or a single `.icdbackup` file that contains all of them, read with a built-in SQLite reader.
+- **Ready for ICdetector 3.1.x.** 3.1.1 and 3.1.2 only change the app (fixes, the topology filter counts) and keep the 3.1.0 formats. The new cell-churn columns (H17) are shown as shadow context in the technical report, without thresholds and without affecting any assessment; the retired external verification and the 3.1.0 dataset cut are explained instead of being misread.
 - **Provenance you can check.** Each imported file is kept as a private copy with its SHA-256; every finding in the technical report cites the file, entry and physical line it comes from; `SHA256SUMS` inside ZIPs is verified.
 - **Hostile input is expected.** Size, row and compression-ratio limits are enforced *before* anything is loaded; malformed CSV, damaged ZIPs, zip bombs and crafted SQLite pages are rejected with a reason, never with a crash.
 - **Privacy controls on the report.** Coordinates can be omitted or rounded (~1 km / ~100 m); TAC and Cell ID can be masked. Rounding is visual only: the originals keep full precision.
@@ -77,7 +77,7 @@ Repetition of a common behaviour can raise the technical interest without raisin
 ## Requirements
 
 - Android 8.0 (API 26) or newer.
-- ICdetector exports: CSV/ZIP from version 2.10.5, 3.0, 3.1.0 or 3.1.1, or a `.icdbackup` from 3.0.0, 3.1.0 or 3.1.1 (schemas 25 and 26).
+- ICdetector exports: CSV/ZIP from version 2.10.5, 3.0 or 3.1.x (up to 3.1.2), or a `.icdbackup` from 3.0.0 or 3.1.x (up to 3.1.2; schemas 25 and 26).
 - No permissions are requested. Files are chosen with the system picker.
 
 ## Install

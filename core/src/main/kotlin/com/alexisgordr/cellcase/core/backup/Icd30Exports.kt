@@ -630,7 +630,8 @@ class Icd30Exports(
         fun knownVersionCode(appVersion: String): Long = when (appVersion.substringBefore('+')) {
             "3.0.0" -> 39L
             "3.1.0" -> 40L
-            "3.1.1" -> 41L   // mismo esquema 26 y mismas exportaciones que 3.1.0
+            "3.1.1" -> 41L   // 3.1.1 y 3.1.2: mismo esquema 26 y mismas exportaciones que 3.1.0
+            "3.1.2" -> 42L
             else -> 0L
         }
 
