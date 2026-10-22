@@ -27,44 +27,54 @@ class SqliteFormatException(message: String) : Exception(message)
 class SqliteFile(file: File) : Closeable {
     private val raf = RandomAccessFile(file, "r")
     val fileBytes: Long = raf.length()
-    val pageSize: Int
-    private val usable: Int
-    val pageCount: Long
-    val textEncoding: Int
-    val userVersion: Int
+    private val header: Header
+    val pageSize: Int get() = header.pageSize
+    private val usable: Int get() = header.usable
+    val pageCount: Long get() = header.pageCount
+    val textEncoding: Int get() = header.textEncoding
+    val userVersion: Int get() = header.userVersion
     /** 2 si la base estaba en modo WAL al copiarla (lo que no se volcó al archivo principal no está aquí). */
-    val readVersion: Int
-    val freelistPages: Long
-    private val charset: Charset
+    val readVersion: Int get() = header.readVersion
+    val freelistPages: Long get() = header.freelistPages
+    private val charset: Charset get() = header.charset
     private val cache = object : LinkedHashMap<Long, ByteArray>(64, 0.75f, true) {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, ByteArray>?) = size > 256
     }
 
     init {
+        // Si la cabecera no vale, el objeto no llega a construirse y nadie podría cerrarlo: se cierra aquí (D-058).
+        header = try { readHeader() } catch (e: Throwable) { runCatching { raf.close() }; throw e }
+    }
+
+    private class Header(val pageSize: Int, val usable: Int, val pageCount: Long, val textEncoding: Int, val userVersion: Int,
+        val readVersion: Int, val freelistPages: Long, val charset: Charset)
+
+    private fun readHeader(): Header {
         if (fileBytes < 512) fail("archivo demasiado corto ($fileBytes bytes)")
         val h = ByteArray(100); raf.seek(0); raf.readFully(h)
         if (String(h, 0, 16, StandardCharsets.ISO_8859_1) != "SQLite format 3\u0000") fail("no es una base de datos SQLite 3")
         val ps = u16(h, 16)
-        pageSize = if (ps == 1) 65536 else ps
+        val pageSize = if (ps == 1) 65536 else ps
         if (pageSize < 512 || pageSize > 65536 || pageSize and (pageSize - 1) != 0) fail("tamaño de página no válido: $ps")
-        readVersion = h[19].toInt() and 0xFF
+        val readVersion = h[19].toInt() and 0xFF
         if (readVersion !in 1..2) fail("versión de lectura no admitida: $readVersion")
         val reserved = h[20].toInt() and 0xFF
-        usable = pageSize - reserved
+        val usable = pageSize - reserved
         if (usable < 480) fail("espacio reservado excesivo: $reserved")
         val declared = u32(h, 28)
         val valid = u32(h, 92) == u32(h, 24)
-        pageCount = if (declared > 0 && valid) declared else fileBytes / pageSize
+        val pageCount = if (declared > 0 && valid) declared else fileBytes / pageSize
         if (pageCount <= 0 || pageCount * pageSize > fileBytes) fail("el archivo es más corto que sus $pageCount páginas")
-        freelistPages = u32(h, 36)
-        textEncoding = u32(h, 56).toInt().let { if (it == 0) 1 else it }
-        charset = when (textEncoding) {
+        val freelistPages = u32(h, 36)
+        val textEncoding = u32(h, 56).toInt().let { if (it == 0) 1 else it }
+        val charset = when (textEncoding) {
             1 -> StandardCharsets.UTF_8
             2 -> StandardCharsets.UTF_16LE
             3 -> StandardCharsets.UTF_16BE
             else -> fail("codificación de texto no válida: $textEncoding")
         }
-        userVersion = u32(h, 60).toInt()
+        val userVersion = u32(h, 60).toInt()
+        return Header(pageSize, usable, pageCount, textEncoding, userVersion, readVersion, freelistPages, charset)
     }
 
     override fun close() = raf.close()

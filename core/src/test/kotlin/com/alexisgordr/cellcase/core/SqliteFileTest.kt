@@ -220,4 +220,28 @@ class SqliteFileTest {
         assertEquals(8, CursorValue.int("010")); assertEquals(3, CursorValue.int(3.99)); assertEquals(-1, CursorValue.int(0xFFFFFFFFL))
         assertEquals(2.5, CursorValue.double("2.5abc"), 0.0); assertEquals(0.0, CursorValue.double("abc"), 0.0); assertEquals(7.0, CursorValue.double(7L), 0.0)
     }
+
+    /**
+     * Una cabecera corrupta no deja el archivo abierto (aviso externo, D-058): antes la excepción salía del constructor con
+     * el RandomAccessFile ya abierto y nadie podía cerrarlo. En Linux se cuentan los descriptores del proceso.
+     */
+    @Test fun corruptHeaderDoesNotLeakTheFileHandle() {
+        val fd = File("/proc/self/fd")
+        org.junit.Assume.assumeTrue("solo en Linux (/proc/self/fd)", fd.isDirectory)
+        val bad = listOf(
+            ByteArray(100),                                                        // demasiado corto
+            ByteArray(1024).also { "no soy sqlite".toByteArray().copyInto(it) },   // sin la firma
+            ByteArray(1024).also { "SQLite format 3\u0000".toByteArray(Charsets.ISO_8859_1).copyInto(it); it[16] = 0; it[17] = 3 }, // página de 3 bytes
+            ByteArray(1024).also { "SQLite format 3\u0000".toByteArray(Charsets.ISO_8859_1).copyInto(it); it[16] = 4; it[17] = 0; it[19] = 9 } // versión de lectura 9
+        )
+        val files = bad.mapIndexed { i, b -> File.createTempFile("corrupt$i", ".db").also { it.deleteOnExit(); it.writeBytes(b) } }
+        fun open() = fd.list()!!.size
+        // Una primera pasada por si la JVM abre algo perezosamente; después la cuenta no debe crecer.
+        files.forEach { f -> try { SqliteFile(f); fail("debía fallar") } catch (_: SqliteFormatException) {} }
+        val before = open()
+        repeat(50) { files.forEach { f -> try { SqliteFile(f); fail("debía fallar") } catch (_: SqliteFormatException) {} } }
+        val after = open()
+        assertTrue("descriptores abiertos: antes $before, después $after", after <= before)
+        files.forEach { it.delete() }
+    }
 }
