@@ -7,7 +7,7 @@
     <a href="#requirements"><img alt="Android 8.0+" src="https://img.shields.io/badge/Android-8.0%2B%20(API%2026)-3DDC84.svg?logo=android&logoColor=white"></a>
     <img alt="Version 0.2.0" src="https://img.shields.io/badge/version-0.2.0-orange.svg">
     <img alt="Kotlin 2.4" src="https://img.shields.io/badge/Kotlin-2.4-7F52FF.svg?logo=kotlin&logoColor=white">
-    <a href="#tests"><img alt="301 tests" src="https://img.shields.io/badge/tests-301%20passing-brightgreen.svg"></a>
+    <a href="#tests"><img alt="327 tests" src="https://img.shields.io/badge/tests-327%20passing-brightgreen.svg"></a>
     <a href="https://github.com/Alexisgordr/CellCase/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Alexisgordr/CellCase/actions/workflows/ci.yml/badge.svg"></a>
   </p>
   <p><em>No accounts · No network · No analytics · Open source</em></p>
@@ -116,8 +116,8 @@ The `:core` module has no Android dependency, so the whole import → analysis �
 
 | Suite | Count | Where |
 |---|---|---|
-| Core (JUnit 4, JVM) | 275 | `core/src/test` |
-| App logic (JVM) | 19 | `app/src/test` |
+| Core (JUnit 4, JVM) | 300 | `core/src/test` |
+| App logic (JVM) | 20 | `app/src/test` |
 | Instrumented (device/emulator) | 7 | `app/src/androidTest` |
 
 The CI workflow (`.github/workflows/ci.yml`) runs on every push and pull request: core and app tests, lint, debug and release APKs, text-catalogue consistency (same keys, placeholders and plural forms in Spanish and English), determinism of the 3.0 and 3.1 synthetic samples, verification of the samples against the source code of ICdetector v2.10.5, v3.0.0 and v3.1.0, and the instrumented tests on an emulator. It signs and publishes nothing.
