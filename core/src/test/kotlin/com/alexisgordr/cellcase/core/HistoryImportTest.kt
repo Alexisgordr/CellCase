@@ -160,6 +160,15 @@ class HistoryImportTest {
         assertTrue(imp.issues.any { it.code == "BOM" })
     }
 
+    /** Revisión 22/10 (A5): la BOM se quita antes de leer la cabecera, también si la primera columna va entre comillas. */
+    @Test fun bomBeforeAQuotedHeaderIsAccepted() {
+        val body = csv(row("2026-09-27 10:00:00"))
+        val first = body.substringBefore(',')
+        val imp = importHistory("\uFEFF\"" + first + "\"" + body.removePrefix(first))
+        assertEquals(1, imp.observations.size)
+        assertTrue(imp.issues.any { it.code == "BOM" })
+    }
+
     @Test fun emptyFileIsRejected() {
         try { importHistory(""); fail() } catch (e: ImportRejected) { assertTrue(e.message!!.contains("vacío")) }
     }

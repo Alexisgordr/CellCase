@@ -1,6 +1,6 @@
 # Copia de seguridad de ICdetector 3.0.0 y 3.1.0 (`.icdbackup`) en CellCase
 
-Lector: `backup-icd/1.1.0` (`core/.../backup/IcdBackup.kt`). Decisiones: D-052 (licencia y reproducción autorizada),
+Lector: `backup-icd/1.2.0` (`core/.../backup/IcdBackup.kt`). Decisiones: D-052 (licencia y reproducción autorizada),
 D-053 (compatibilidad 3.0), D-054 (lectura de la copia y presupuesto), D-057 (esquema 26). Fuentes consultadas:
 ICdetector `v3.0.0` (commit `f5173a8`) y `v3.1.0` (commit `90627b7`, §7).
 
@@ -41,11 +41,17 @@ depende el texto exacto de las exportaciones.
 
 ## 4. Qué se importa
 
+Antes de abrir el ZIP se lee solo su final y su directorio central, con un tope de 1 MiB (D-059):
+`java.util.zip.ZipFile` reserva de golpe el tamaño que declara el EOCD, y un archivo manipulado agotaba la memoria.
+
 Cada exportación obtenida de la base es una **parte** de la importación de la copia (`copia.icdbackup › history.csv`,
 `… › topology.zip`, etc.) y pasa por **su mismo lector y sus mismos límites** que si se hubiera importado el archivo
 exportado: filas por tabla, tamaño, y el presupuesto de historial del expediente (D-054). Solo se crean las partes
 cuyas tablas tienen filas. Lo que se conserva como original es la copia, con su huella; las partes constan en el
 informe (tabla de archivos, integridad y anexo), con el aviso de que se han reconstruido.
+
+El límite de bytes de cada parte (el de su archivo exportado) se aplica **mientras** se leen sus tablas y se escribe
+el CSV, no después de montarlo en memoria (D-060). La reconstrucción consulta la cancelación dentro de sus bucles.
 
 Los casos forenses se construyen de uno en uno, al leerlos. Un caso cuyo `payload_json` suma más de lo que cabe
 descomprimido en un ZIP exportado (`ZipLimits.maxTotalBytes`, 8 MiB) no se carga: queda como parte «demasiado

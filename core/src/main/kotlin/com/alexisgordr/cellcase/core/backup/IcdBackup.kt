@@ -44,7 +44,7 @@ object IcdBackupFormat {
     /** Las betas de 3.0 escribían del 20 al 24: no se leen. */
     const val FIRST_SCHEMA = 20
     /** Versión del lector de copias. Se guarda con la importación, como la de los demás lectores. */
-    const val READER_VERSION = "backup-icd/1.1.0"
+    const val READER_VERSION = "backup-icd/1.2.0"
 }
 
 /** Límites de la copia (docs/limits.md). La base no se carga en memoria: se copia a un archivo temporal. */
@@ -63,7 +63,14 @@ data class BackupLimits(
      * Bytes de `payload_json` de un caso forense por encima de los cuales no se reconstruye (no se carga): el
      * descomprimido máximo de un ZIP exportado (`ZipLimits.maxTotalBytes`). Un caso real ocupa ~150 KiB.
      */
-    val maxForensicPayloadBytes: Long = ZipLimits().maxTotalBytes
+    val maxForensicPayloadBytes: Long = ZipLimits().maxTotalBytes,
+    /**
+     * Bytes máximos del historial reconstruido: el de un historial exportado. Se aplica mientras se lee la tabla y se
+     * escribe el CSV (revisión 22/10, A3), no después de montarlo en memoria.
+     */
+    val maxHistoryPartBytes: Long = ImportLimits.MAX_HISTORY_FILE_BYTES,
+    /** Igual para las demás partes: el mayor de un archivo exportado y de un ZIP descomprimido. */
+    val maxPartBytes: Long = maxOf(ImportLimits.MAX_FILE_BYTES, ZipLimits().maxTotalBytes)
 )
 
 /** Lo que dice el manifiesto y lo comprobado sobre la base. */
@@ -107,8 +114,9 @@ object IcdBackupReader {
     fun isBackup(entryNames: Collection<String>): Boolean =
         IcdBackupFormat.MANIFEST in entryNames && IcdBackupFormat.DATABASE in entryNames
 
+    /** Lee solo el final del archivo y su directorio central, sin abrir `ZipFile` (A1: un EOCD falso agotaba la memoria). */
     fun isBackup(file: File): Boolean = try {
-        ZipFile(file).use { z -> isBackup(z.entries().asSequence().map { it.name }.toList()) }
+        isBackup(SafeZip.centralDirectoryNames(file))
     } catch (_: Exception) { false }
 
     fun read(
@@ -123,6 +131,10 @@ object IcdBackupReader {
             info?.let { ImportedData.Backup(it, emptyList()) }, emptyList())
         if (size > limits.maxBackupBytes) return fail(ImportState.TOO_LARGE, msg("import.backup.too_large", size / 1048576, limits.maxBackupBytes / 1048576))
 
+        // El directorio central se comprueba y se acota antes de abrir ZipFile, que lo reserva entero en memoria (A1).
+        try { SafeZip.centralDirectoryNames(file) } catch (e: ImportRejected) {
+            return fail(if (e.kind == RejectKind.ZIP_SECURITY) ImportState.ZIP_SECURITY else ImportState.DAMAGED_ZIP, e.text)
+        }
         val zip = try { ZipFile(file) } catch (e: ZipException) { return fail(ImportState.DAMAGED_ZIP, msg("import.backup.damaged", e.message ?: "")) }
         zip.use { z ->
             val all = z.entries().asSequence().toList()
@@ -237,7 +249,8 @@ object IcdBackupReader {
      */
     private fun parts(db: SqliteFile, info: BackupInfo, at: Instant, fileName: String, importId: String, zone: DeclaredZone?,
                       cp: Checkpoint, budget: CaseBudget?, issues: IssueCollector, limits: BackupLimits): List<ImportResult> {
-        val ex = Icd30Exports(db, info.appVersion ?: "unknown", at.toEpochMilli(), maxRows = limits.maxRows)
+        val ex = Icd30Exports(db, info.appVersion ?: "unknown", at.toEpochMilli(), maxRows = limits.maxRows,
+            maxHistoryBytes = limits.maxHistoryPartBytes, maxPartBytes = limits.maxPartBytes, checkpoint = cp)
         val out = ArrayList<ImportResult>()
         fun rows(t: String) = info.tables[t] ?: 0L
         fun name(n: String) = "$fileName › $n"
@@ -249,6 +262,7 @@ object IcdBackupReader {
                 build()?.let(use)
             } catch (e: java.util.concurrent.CancellationException) { throw e
             } catch (e: Icd30Exports.TooManyRows) { failPart(kind, n, id, ImportState.TOO_LARGE, msg("import.backup.too_many_rows", e.table, limits.maxRows))
+            } catch (e: Icd30Exports.PartTooLarge) { failPart(kind, n, id, ImportState.TOO_LARGE, msg("import.backup.part_too_large", e.table, (e.limit + 1048575) / 1048576))
             } catch (e: ImportRejected) { failPart(kind, n, id, ImportState.INCOMPATIBLE, e.text)
             } catch (e: SqliteFormatException) { throw e
             } catch (e: IndexOutOfBoundsException) { throw SqliteFormatException("lectura fuera de los datos en $n")

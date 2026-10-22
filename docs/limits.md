@@ -1,4 +1,4 @@
-# Límites de importación y memoria (`readers/2.4.0`, D-041, D-046, D-054)
+# Límites de importación y memoria (`readers/2.4.1`, D-041, D-046, D-054, D-059, D-060)
 
 CellCase procesa los archivos en el teléfono, sin servidor. Los límites rechazan lo que no cabe **antes de
 acumularlo**; no se captura `OutOfMemoryError` en ningún punto.
@@ -26,8 +26,13 @@ El 2/10/2026 se dio como razonable un límite de 16 MiB por archivo **sin medirl
 | ZIP descomprimido | 8 MiB | `ZipLimits` |
 | Entradas por ZIP | 64 | `ZipLimits` |
 | Ratio de compresión | 200 | `ZipLimits` |
+| Directorio central de un ZIP | 1 MiB | `SafeZip.MAX_CENTRAL_DIRECTORY_BYTES`: se lee el final del archivo y se comprueba antes de abrirlo con `ZipFile`, que reserva de golpe lo que declara el EOCD (D-059) |
+| Parte reconstruida de una copia | la de su archivo exportado (historial 16 MiB; el resto 8 MiB) | `BackupLimits.maxHistoryPartBytes` y `maxPartBytes`: se aplica mientras se leen las tablas (hasta el doble del tope, porque tienen columnas que no se exportan) y mientras se escribe el CSV, no después (D-060) |
 | **Historiales del expediente** | 40.000 filas en total | `CaseBudget` (también el historial de una copia de seguridad) |
 | **ZIP del expediente** | 8 MiB descomprimidos en total | `CaseBudget` |
+
+Las filas del presupuesto de historiales se cuentan con las mismas reglas que el lector CSV: fin de registro `\n`,
+`\r\n` o un `\r` solo, y los saltos dentro de comillas no cuentan (D-059; antes un historial con `\r` contaba 0 filas).
 
 El presupuesto del expediente se reserva **en orden de importación**: los primeros archivos tienen prioridad y el
 que no cabe se marca «demasiado grande» con un mensaje propio, sin interpretarlo. El archivo se conserva. En la app,

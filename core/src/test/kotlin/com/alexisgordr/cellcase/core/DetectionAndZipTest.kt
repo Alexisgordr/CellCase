@@ -65,4 +65,43 @@ class DetectionAndZipTest {
             assertTrue(bad, SafeZip.validateEntryName(bad) != null)
         }
     }
+
+    /** ZIP con un EOCD que declara un directorio central de [cd] bytes en [offset] (archivo disperso: no ocupa disco). */
+    private fun fakeEocdZip(cd: Long, offset: Long = 4, fileBytes: Long = 4 + cd): File {
+        val f = File.createTempFile("eocd", ".zip").also { it.deleteOnExit() }
+        java.io.RandomAccessFile(f, "rw").use { r ->
+            r.write(byteArrayOf(0x50, 0x4b, 0x03, 0x04)); r.setLength(fileBytes); r.seek(fileBytes)
+            val e = ByteArray(22); e[0] = 0x50; e[1] = 0x4b; e[2] = 0x05; e[3] = 0x06; e[10] = 1
+            for (k in 0..3) { e[12 + k] = (cd shr (8 * k)).toByte(); e[16 + k] = (offset shr (8 * k)).toByte() }
+            r.write(e)
+        }
+        return f
+    }
+
+    /** Revisión 22/10 (A1): leer el directorio central de un archivo no carga el archivo ni reserva lo que declara. */
+    @Test fun centralDirectoryFromDiskMatchesTheInMemoryReaderAndIsBounded() {
+        for (f in File(TestSupport.root, "samples/synthetic").walk().filter { it.isFile && (it.name.endsWith(".zip") || it.name.endsWith(".icdbackup")) }) {
+            val mem = try { SafeZip.centralDirectoryNames(f.readBytes()) } catch (e: ImportRejected) { null }
+            val disk = try { SafeZip.centralDirectoryNames(f) } catch (e: ImportRejected) { null }
+            assertEquals(f.name, mem, disk)
+        }
+        // Directorio central declarado de 100 MiB: rechazado por tamaño sin leerlo
+        val big = fakeEocdZip(100L * 1024 * 1024)
+        try { SafeZip.centralDirectoryNames(big); fail("debía rechazarlo") } catch (e: ImportRejected) {
+            assertEquals(com.alexisgordr.cellcase.core.importing.RejectKind.ZIP_SECURITY, e.kind)
+        }
+        // Directorio central que apunta más allá del EOCD: dañado
+        val out = fakeEocdZip(cd = 1000, offset = 4, fileBytes = 500)
+        try { SafeZip.centralDirectoryNames(out); fail("debía rechazarlo") } catch (e: ImportRejected) {
+            assertEquals(com.alexisgordr.cellcase.core.importing.RejectKind.DAMAGED_ZIP, e.kind)
+        }
+        // La importación por archivo y la lectura directa de una copia no lanzan: dan un estado
+        val r = com.alexisgordr.cellcase.core.importing.ImportPipeline.processFile(big, "x.zip", "x", null)
+        assertTrue(r.state.name, r.state in setOf(com.alexisgordr.cellcase.core.importing.ImportState.TOO_LARGE,
+            com.alexisgordr.cellcase.core.importing.ImportState.ZIP_SECURITY, com.alexisgordr.cellcase.core.importing.ImportState.DAMAGED_ZIP))
+        assertEquals(com.alexisgordr.cellcase.core.importing.ImportState.ZIP_SECURITY,
+            com.alexisgordr.cellcase.core.backup.IcdBackupReader.read(big, "x.icdbackup", "x", null).state)
+        assertTrue(!com.alexisgordr.cellcase.core.backup.IcdBackupReader.isBackup(big))
+        listOf(big, out).forEach { it.delete() }
+    }
 }

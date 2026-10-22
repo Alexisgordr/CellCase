@@ -58,35 +58,79 @@ object SafeZip {
         return out
     }
 
-    /** Nombres del directorio central. Lanza [ImportRejected] si no existe o está incompleto. */
-    fun centralDirectoryNames(zip: ByteArray): List<String> {
-        fun u16(i: Int) = (zip[i].toInt() and 0xFF) or ((zip[i + 1].toInt() and 0xFF) shl 8)
-        fun u32(i: Int) = u16(i).toLong() or (u16(i + 2).toLong() shl 16)
-        val minEocd = 22
-        if (zip.size < minEocd) throw ImportRejected(msg("import.u32.zip_truncado_no_contiene_el"), RejectKind.DAMAGED_ZIP)
-        var eocd = -1
-        var i = zip.size - minEocd
-        val lowest = maxOf(0, zip.size - minEocd - 0xFFFF)
-        while (i >= lowest) {
-            if (u32(i) == 0x06054b50L) { eocd = i; break }
-            i--
-        }
-        if (eocd < 0) throw ImportRejected(msg("import.u32.zip_truncado_o_danado_falta"), RejectKind.DAMAGED_ZIP)
-        val count = u16(eocd + 10)
-        val cdSize = u32(eocd + 12)
-        val cdOffset = u32(eocd + 16)
+    /**
+     * Tamaño máximo del directorio central que se acepta antes de leerlo. ICdetector escribe como mucho unas decenas de
+     * entradas planas (unos pocos KiB); un directorio declarado mayor es un ZIP manipulado. `java.util.zip.ZipFile`
+     * reserva de golpe un `byte[]` del tamaño declarado en el EOCD, así que este límite se comprueba antes de abrirlo.
+     */
+    const val MAX_CENTRAL_DIRECTORY_BYTES: Long = 1L shl 20
+
+    private const val EOCD_SIZE = 22
+    private const val EOCD_SIG = 0x06054b50L
+
+    private fun u16(b: ByteArray, i: Int) = (b[i].toInt() and 0xFF) or ((b[i + 1].toInt() and 0xFF) shl 8)
+    private fun u32(b: ByteArray, i: Int) = u16(b, i).toLong() or (u16(b, i + 2).toLong() shl 16)
+
+    /** Posición del EOCD dentro de [b] (buscando hacia atrás, con el comentario máximo de 64 KiB), o -1. */
+    private fun findEocd(b: ByteArray): Int {
+        var i = b.size - EOCD_SIZE
+        val lowest = maxOf(0, b.size - EOCD_SIZE - 0xFFFF)
+        while (i >= lowest) { if (u32(b, i) == EOCD_SIG) return i; i-- }
+        return -1
+    }
+
+    /** Número de entradas, tamaño y posición del directorio central, comprobados frente a la posición del EOCD. */
+    private fun directory(b: ByteArray, eocd: Int, eocdPos: Long): Triple<Int, Long, Long> {
+        val count = u16(b, eocd + 10)
+        val cdSize = u32(b, eocd + 12)
+        val cdOffset = u32(b, eocd + 16)
         if (count == 0xFFFF || cdOffset == 0xFFFFFFFFL) throw ImportRejected(msg("import.u32.zip64_no_admitido_icdetector_no"), RejectKind.INCOMPATIBLE)
-        if (cdOffset + cdSize > eocd) throw ImportRejected(msg("import.u32.zip_danado_el_directorio_central"), RejectKind.DAMAGED_ZIP)
+        if (cdOffset + cdSize > eocdPos) throw ImportRejected(msg("import.u32.zip_danado_el_directorio_central"), RejectKind.DAMAGED_ZIP)
+        return Triple(count, cdSize, cdOffset)
+    }
+
+    /** Nombres de [count] entradas del directorio central que empieza en [start] de [b] y no pasa de [end]. */
+    private fun names(b: ByteArray, start: Int, end: Int, count: Int): List<String> {
         val names = ArrayList<String>()
-        var p = cdOffset.toInt()
+        var p = start
         repeat(count) {
-            if (p + 46 > eocd || u32(p) != 0x02014b50L) throw ImportRejected(msg("import.u32.zip_danado_directorio_central_incompleto"), RejectKind.DAMAGED_ZIP)
-            val nameLen = u16(p + 28); val extraLen = u16(p + 30); val commentLen = u16(p + 32)
-            if (p + 46 + nameLen > eocd) throw ImportRejected(msg("import.u32.zip_danado_nombre_de_entrada"), RejectKind.DAMAGED_ZIP)
-            names += String(zip, p + 46, nameLen, Charsets.UTF_8)
+            if (p + 46 > end || u32(b, p) != 0x02014b50L) throw ImportRejected(msg("import.u32.zip_danado_directorio_central_incompleto"), RejectKind.DAMAGED_ZIP)
+            val nameLen = u16(b, p + 28); val extraLen = u16(b, p + 30); val commentLen = u16(b, p + 32)
+            if (p + 46 + nameLen > end) throw ImportRejected(msg("import.u32.zip_danado_nombre_de_entrada"), RejectKind.DAMAGED_ZIP)
+            names += String(b, p + 46, nameLen, Charsets.UTF_8)
             p += 46 + nameLen + extraLen + commentLen
         }
         return names
+    }
+
+    /** Nombres del directorio central. Lanza [ImportRejected] si no existe o está incompleto. */
+    fun centralDirectoryNames(zip: ByteArray): List<String> {
+        if (zip.size < EOCD_SIZE) throw ImportRejected(msg("import.u32.zip_truncado_no_contiene_el"), RejectKind.DAMAGED_ZIP)
+        val eocd = findEocd(zip)
+        if (eocd < 0) throw ImportRejected(msg("import.u32.zip_truncado_o_danado_falta"), RejectKind.DAMAGED_ZIP)
+        val (count, _, cdOffset) = directory(zip, eocd, eocd.toLong())
+        return names(zip, cdOffset.toInt(), eocd, count)
+    }
+
+    /**
+     * Nombres del directorio central de un ZIP en disco, leyendo solo su final y el propio directorio (como mucho
+     * [MAX_CENTRAL_DIRECTORY_BYTES]). Se llama ANTES de abrir el archivo con `java.util.zip.ZipFile`, que reserva
+     * memoria para el directorio declarado sin comprobarlo (revisión 22/10, A1: OutOfMemoryError con un EOCD falso).
+     */
+    fun centralDirectoryNames(file: java.io.File): List<String> = java.io.RandomAccessFile(file, "r").use { raf ->
+        val len = raf.length()
+        if (len < EOCD_SIZE) throw ImportRejected(msg("import.u32.zip_truncado_no_contiene_el"), RejectKind.DAMAGED_ZIP)
+        val tail = ByteArray(minOf(len, (EOCD_SIZE + 0xFFFF).toLong()).toInt())
+        val tailStart = len - tail.size
+        raf.seek(tailStart); raf.readFully(tail)
+        val eocd = findEocd(tail)
+        if (eocd < 0) throw ImportRejected(msg("import.u32.zip_truncado_o_danado_falta"), RejectKind.DAMAGED_ZIP)
+        val (count, cdSize, cdOffset) = directory(tail, eocd, tailStart + eocd)
+        if (cdSize > MAX_CENTRAL_DIRECTORY_BYTES)
+            throw ImportRejected(msg("import.zip.central_directory_too_large", cdSize, MAX_CENTRAL_DIRECTORY_BYTES), RejectKind.ZIP_SECURITY)
+        val cd = ByteArray(cdSize.toInt())
+        raf.seek(cdOffset); raf.readFully(cd)
+        names(cd, 0, cd.size, count)
     }
 
     private fun readSequential(

@@ -21,11 +21,38 @@ class Icd30Exports(
     private val exportAtMs: Long,
     private val device: String = "",
     private val android: String = "",
-    private val maxRows: Int = Int.MAX_VALUE
+    private val maxRows: Int = Int.MAX_VALUE,
+    /**
+     * Bytes máximos del historial CSV reconstruido (el límite de un historial exportado). Se aplica MIENTRAS se leen
+     * las tablas y se escribe el CSV, no después (revisión 22/10, A3): las tablas pueden leer hasta [RAW_FACTOR] veces
+     * este tope (tienen columnas que no se exportan) y el CSV se corta en cuanto lo pasa.
+     */
+    private val maxHistoryBytes: Long = Long.MAX_VALUE,
+    /** Igual para el resto de partes (Radio, Topología, Geometría, Stable-Site, lista de casos forenses). */
+    private val maxPartBytes: Long = Long.MAX_VALUE,
+    /** Cancelación: se consulta mientras se leen las tablas, no solo entre partes (A4). */
+    private val checkpoint: com.alexisgordr.cellcase.core.importing.Checkpoint = com.alexisgordr.cellcase.core.importing.Checkpoint.NONE
 ) {
     private val versionCode: Long = knownVersionCode(appVersion)
 
     class TooManyRows(val table: String, val rows: Int) : Exception("$table: $rows filas")
+
+    /** Una parte pasaría de su límite de bytes: no se construye. [bytes] es lo leído hasta el corte. */
+    class PartTooLarge(val table: String, val bytes: Long, val limit: Long) : Exception("$table: más de $limit bytes")
+
+    // Bytes leídos de las tablas de la parte en curso y su tope (las partes se construyen de una en una)
+    private var partRead = 0L
+    private var partRawLimit = Long.MAX_VALUE
+    private var partLimit = Long.MAX_VALUE
+
+    private inline fun <T> part(limit: Long, block: () -> T): T {
+        partRead = 0; partLimit = limit
+        partRawLimit = if (limit >= Long.MAX_VALUE / RAW_FACTOR) Long.MAX_VALUE else limit * RAW_FACTOR
+        try { return block() } finally { partRead = 0; partLimit = Long.MAX_VALUE; partRawLimit = Long.MAX_VALUE }
+    }
+
+    /** Tamaño aproximado de una fila leída: texto por caracteres, BLOB por bytes, números 8. */
+    private fun rowBytes(r: SqliteFile.Row): Long = r.values.sumOf { v -> when (v) { null -> 0L; is String -> v.length.toLong(); is ByteArray -> v.size.toLong(); else -> 8L } }
 
     // ───────────────────────── acceso a tablas ─────────────────────────
 
@@ -36,7 +63,13 @@ class Icd30Exports(
     private fun load(name: String): Rows? {
         val t = db.table(name) ?: return null
         val out = ArrayList<SqliteFile.Row>()
-        for (r in db.rows(t)) { out += r; if (out.size > maxRows) throw TooManyRows(name, out.size) }
+        for (r in db.rows(t)) {
+            out += r
+            if (out.size > maxRows) throw TooManyRows(name, out.size)
+            partRead += rowBytes(r)
+            if (partRead > partRawLimit) throw PartTooLarge(name, partRead, partLimit)
+            if (out.size and 1023 == 0) checkpoint.check()
+        }
         return Rows(t, out)
     }
 
@@ -51,7 +84,9 @@ class Icd30Exports(
      * columnas del churn (esquema 26, ICdetector 3.1.0), las 3 de 3.1.0 al final. Se decide por las columnas de la
      * tabla, no por el número de esquema. Null si no hay tabla `history`.
      */
-    fun historyCsv(): ByteArray? {
+    fun historyCsv(): ByteArray? = part(maxHistoryBytes) { buildHistoryCsv() }
+
+    private fun buildHistoryCsv(): ByteArray? {
         val h = load("history") ?: return null
         val ev = load("profile_evaluations")
         val byHistory = HashMap<Long, SqliteFile.Row>()
@@ -94,6 +129,8 @@ class Icd30Exports(
                 if (h.col("id") >= 0) r.rowid else null, s("observation_id")
             ) + if (churn) listOf(optInt("churn_cells_15m"), optInt("churn_changes_15m"), s("churn_motion")) else emptyList()
             values.joinTo(sb, ",") { field(it) }; sb.append('\n')
+            // Cada carácter ocupa al menos un byte en UTF-8: al pasar del tope en caracteres ya lo pasa en bytes
+            if (sb.length > partLimit) throw PartTooLarge("history", sb.length.toLong(), partLimit)
         }
         return sb.toString().toByteArray(Charsets.UTF_8)
     }
@@ -103,7 +140,9 @@ class Icd30Exports(
 
     // ───────────────────────── Radio (ExportUtils.serviceStateCsvRow, CellDbHelper.getServiceStateEvents) ─────────────────────────
 
-    fun serviceStateCsv(): ByteArray? {
+    fun serviceStateCsv(): ByteArray? = part(maxPartBytes) { buildServiceStateCsv() }
+
+    private fun buildServiceStateCsv(): ByteArray? {
         val t = load("service_state_events") ?: return null
         // ORDER BY ts_ms DESC, id DESC y después sortedBy { timestampMs } (estable)
         val ordered = t.rows.sortedWith(compareByDescending<SqliteFile.Row> { CursorValue.long(it.v(t, "ts_ms")) }.thenByDescending { it.rowid })
@@ -147,7 +186,9 @@ class Icd30Exports(
         }
     }
 
-    fun topology(): LinkedHashMap<String, ByteArray>? {
+    fun topology(): LinkedHashMap<String, ByteArray>? = part(maxPartBytes) { buildTopology() }
+
+    private fun buildTopology(): LinkedHashMap<String, ByteArray>? {
         val tr = routes() ?: return null
         val files = LinkedHashMap<String, ByteArray>()
         val ids = tr.flatMap { listOf(it.from, it.to) }.distinct().sorted()
@@ -192,7 +233,9 @@ class Icd30Exports(
 
     // ───────────────────────── geometría (GeometryExporter.buildFiles, MobilityGeometryProjection, MobilityFamiliarityPolicy) ─────────────────────────
 
-    fun geometry(): LinkedHashMap<String, ByteArray>? {
+    fun geometry(): LinkedHashMap<String, ByteArray>? = part(maxPartBytes) { buildGeometry() }
+
+    private fun buildGeometry(): LinkedHashMap<String, ByteArray>? {
         val tr = routes() ?: return null
         val trips = load("mobility_trips") ?: return null
         val tc = load("mobility_trip_cells"); val te = load("mobility_trip_edges")
@@ -273,7 +316,9 @@ class Icd30Exports(
 
     // ───────────────────────── Stable-Site (CellDbHelper.getStableSiteExportFiles, StableSiteMaturityPolicy, StableSiteExportNote) ─────────────────────────
 
-    fun stableSite(): LinkedHashMap<String, ByteArray>? {
+    fun stableSite(): LinkedHashMap<String, ByteArray>? = part(maxPartBytes) { buildStableSite() }
+
+    private fun buildStableSite(): LinkedHashMap<String, ByteArray>? {
         val ev = load("site_cell_evidence") ?: return null
         val days = load("site_cell_days"); val motion = load("site_motion_days")
         val rf = load("site_rf_neighbours"); val rfDays = load("site_rf_neighbour_days"); val sh = load("site_shadow_triggers")
@@ -283,18 +328,23 @@ class Icd30Exports(
         files[PRIVACY_FILE] = PRIVACY_NOTE.toByteArray()
         // Agrupación por site_key en el orden de la clave primaria (site_key, cell_identity, role): orden binario ascendente.
         val bySite = ev.rows.groupBy { s(ev, it, "site_key") ?: "" }.toSortedMap(BINARY)
-        fun distinctDays(rows: Rows?, site: String, filter: (SqliteFile.Row) -> Boolean) =
-            rows?.rows.orEmpty().filter { s(rows, it, "site_key") == site && filter(it) }.mapNotNull { s(rows, it, "day") }.toSet().size
+        // Índices por site_key (A4: antes cada sitio recorría las tablas enteras). La clave es la del valor tal cual,
+        // null incluido, para que las búsquedas den exactamente las mismas filas que el filtro `site_key == site`.
+        fun index(rows: Rows?) = rows?.rows.orEmpty().groupBy { s(rows, it, "site_key") }
+        val evIdx = index(ev); val daysIdx = index(days); val motionIdx = index(motion); val rfIdx = index(rf); val rfDaysIdx = index(rfDays)
+        fun distinctDays(rows: Rows?, idx: Map<String?, List<SqliteFile.Row>>, site: String, filter: (SqliteFile.Row) -> Boolean) =
+            idx[site].orEmpty().filter { filter(it) }.mapNotNull { s(rows, it, "day") }.toSet().size
         files["sites.csv"] = buildString {
             append("site_key,feature_state,neighbour_capability,maturity_reason,serving_observations,serving_distinct_days,static_distinct_days,full_neighbour_observations,full_neighbour_distinct_days,rf_neighbour_observations,rf_neighbour_distinct_days,first_seen_ms,last_seen_ms\n")
             for ((site, rows) in bySite) {
                 val servingObs = rows.filter { s(ev, it, "role") == "SERVING" }.sumOf { CursorValue.long(l(ev, it, "observations")) }
-                val servingDays = distinctDays(days, site) { s(days, it, "role") == "SERVING" }
-                val staticDays = distinctDays(motion, site) { s(motion, it, "state") == "STATIC_CONFIRMED" }
-                val fullDays = distinctDays(days, site) { s(days, it, "role") == "NEIGHBOUR" }
-                val fullObs = ev.rows.filter { s(ev, it, "site_key") == site && s(ev, it, "role") == "NEIGHBOUR" }.sumOf { CursorValue.long(l(ev, it, "observations")) }
-                val rfD = distinctDays(rfDays, site) { true }
-                val rfObs = rf?.rows.orEmpty().filter { s(rf, it, "site_key") == site }.sumOf { CursorValue.long(l(rf!!, it, "observations")) }
+                checkpoint.check()
+                val servingDays = distinctDays(days, daysIdx, site) { s(days, it, "role") == "SERVING" }
+                val staticDays = distinctDays(motion, motionIdx, site) { s(motion, it, "state") == "STATIC_CONFIRMED" }
+                val fullDays = distinctDays(days, daysIdx, site) { s(days, it, "role") == "NEIGHBOUR" }
+                val fullObs = evIdx[site].orEmpty().filter { s(ev, it, "role") == "NEIGHBOUR" }.sumOf { CursorValue.long(l(ev, it, "observations")) }
+                val rfD = distinctDays(rfDays, rfDaysIdx, site) { true }
+                val rfObs = rfIdx[site].orEmpty().sumOf { CursorValue.long(l(rf!!, it, "observations")) }
                 val first = rows.mapNotNull { l(ev, it, "first_seen_ms")?.let { v -> CursorValue.long(v) } }.minOrNull()
                 val last = rows.mapNotNull { l(ev, it, "last_seen_ms")?.let { v -> CursorValue.long(v) } }.maxOrNull()
                 val (state, cap, reason) = maturity(servingDays, staticDays, fullDays, rfD, servingObs.toInt())
@@ -306,9 +356,11 @@ class Icd30Exports(
             append("site_key,cell_identity,serving_observations,serving_distinct_days,neighbour_observations,neighbour_distinct_days,first_serving_ms,last_serving_ms,first_neighbour_ms,last_neighbour_ms\n")
             val groups = ev.rows.groupBy { (s(ev, it, "site_key") ?: "") to (s(ev, it, "cell_identity") ?: "") }
                 .toSortedMap(compareBy<Pair<String, String>, String>(BINARY) { it.first }.thenComparing({ it.second }, BINARY))
+            val daysByCell = days?.rows.orEmpty().groupingBy { Triple(s(days, it, "site_key"), s(days, it, "cell_identity"), s(days, it, "role")) }.eachCount()
             for ((k, rows) in groups) {
+                checkpoint.check()
                 fun role(r: String) = rows.filter { s(ev, it, "role") == r }
-                fun dayCount(r: String) = days?.rows.orEmpty().count { s(days, it, "site_key") == k.first && s(days, it, "cell_identity") == k.second && s(days, it, "role") == r }
+                fun dayCount(r: String) = daysByCell[Triple<String?, String?, String?>(k.first, k.second, r)] ?: 0
                 fun min(r: String, c: String) = role(r).mapNotNull { l(ev, it, c)?.let { v -> CursorValue.long(v) } }.minOrNull()
                 fun max(r: String, c: String) = role(r).mapNotNull { l(ev, it, c)?.let { v -> CursorValue.long(v) } }.maxOrNull()
                 listOf(k.first, k.second, role("SERVING").sumOf { CursorValue.long(l(ev, it, "observations")) }, dayCount("SERVING"),
@@ -320,9 +372,10 @@ class Icd30Exports(
         }.toByteArray()
         files["site_rf_neighbours.csv"] = buildString {
             append("site_key,rf_fingerprint,evidence_type,radio,arfcn,pci,mcc_metadata,mnc_metadata,tac_metadata,observations,distinct_days,first_seen_ms,last_seen_ms\n")
+            val rfDaysByFp = rfDays?.rows.orEmpty().groupingBy { s(rfDays, it, "site_key") to s(rfDays, it, "fingerprint") }.eachCount()
             rf?.rows.orEmpty().sortedWith(compareBy<SqliteFile.Row, String>(BINARY) { s(rf, it, "site_key") ?: "" }.thenComparing({ s(rf, it, "fingerprint") ?: "" }, BINARY)).forEach { r ->
                 val site = s(rf, r, "site_key"); val fp = s(rf, r, "fingerprint")
-                val n = rfDays?.rows.orEmpty().count { s(rfDays, it, "site_key") == site && s(rfDays, it, "fingerprint") == fp }
+                val n = rfDaysByFp[site to fp] ?: 0
                 listOf(site, fp, "RF_CONTEXT", s(rf, r, "radio"), s(rf, r, "arfcn"), s(rf, r, "pci"), s(rf, r, "mcc"), s(rf, r, "mnc"), s(rf, r, "tac"),
                     s(rf, r, "observations"), n.toString(), s(rf, r, "first_seen_ms"), s(rf, r, "last_seen_ms")).joinTo(this, ",") { field(it) }
                 append('\n')
@@ -366,14 +419,18 @@ class Icd30Exports(
      * Un ZIP por caso, del más reciente al más antiguo (`ORDER BY c.id DESC`). Una muestra ilegible lanza
      * [AndroidJson.ParseException] al construir ese caso, no al listar.
      */
-    fun forensicCases(): List<ForensicExport>? {
+    fun forensicCases(): List<ForensicExport>? = part(maxPartBytes) { buildForensicCases() }
+
+    private fun buildForensicCases(): List<ForensicExport>? {
         val cases = load("forensic_cases") ?: return null
         val st = db.table("forensic_samples")
         // Primera pasada: bytes y muestras por caso, sin guardar los payloads.
         val bytes = HashMap<Long, Long>(); val counts = HashMap<Long, Int>()
         if (st != null) {
             val ci = st.indexOf("case_id"); val pi = st.indexOf("payload_json")
+            var n = 0
             for (r in db.rows(st)) {
+                if (++n and 1023 == 0) checkpoint.check()
                 val id = CursorValue.long(r[ci])
                 bytes.merge(id, payloadSize(r[pi]), Long::plus); counts.merge(id, 1, Int::plus)
             }
@@ -386,7 +443,9 @@ class Icd30Exports(
                 if (st != null) {
                     val ci = st.indexOf("case_id")
                     // Segunda pasada, solo las muestras de este caso (en orden de rowid, como `ORDER BY id`).
+                    var n = 0
                     for (s in db.rows(st)) {
+                        if (++n and 1023 == 0) checkpoint.check()
                         if (CursorValue.long(s[ci]) != c.rowid) continue
                         if (list.size >= maxRows) throw TooManyRows("forensic_samples", list.size + 1)
                         list += Triple(CursorValue.long(s[st.indexOf("wall_time_ms")]), CursorValue.long(s[st.indexOf("elapsed_time_ms")]), CursorValue.string(s[st.indexOf("event")])) to
@@ -561,6 +620,9 @@ class Icd30Exports(
         }
 
         /** `versionCode` de las versiones publicadas que conoce CellCase (la copia no lo guarda). 0 si no se conoce. */
+        /** Las tablas de una parte pueden ocupar al leerlas hasta este múltiplo del tope de la parte (A3). */
+        const val RAW_FACTOR = 2L
+
         fun knownVersionCode(appVersion: String): Long = when (appVersion.substringBefore('+')) {
             "3.0.0" -> 39L
             "3.1.0" -> 40L

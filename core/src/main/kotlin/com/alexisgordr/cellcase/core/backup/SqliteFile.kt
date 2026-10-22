@@ -139,14 +139,16 @@ class SqliteFile(file: File) : Closeable {
 
     /** Filas de [table] en orden de rowid. Cada fila tiene un valor por columna (Long, Double, String, ByteArray o null). */
     fun rows(table: Table): Sequence<Row> = sequence {
+        // Una página se marca como visitada al apilarla, no al sacarla (A4): así la pila nunca tiene más páginas que
+        // la base, aunque una base manipulada repita los mismos hijos en muchas páginas interiores.
         val visited = HashSet<Long>()
         val stack = ArrayDeque<Pair<Long, Int>>()
-        stack.addLast(table.rootPage to 0)
+        fun push(pn: Long, depth: Int) { if (!visited.add(pn)) fail("ciclo en el árbol de ${table.name} (página $pn)"); stack.addLast(pn to depth) }
+        push(table.rootPage, 0)
         // Recorrido en profundidad por orden de clave: los hijos se apilan al revés.
         while (stack.isNotEmpty()) {
             val (pn, depth) = stack.removeLast()
             if (depth > 40) fail("árbol demasiado profundo en ${table.name}")
-            if (!visited.add(pn)) fail("ciclo en el árbol de ${table.name} (página $pn)")
             val p = page(pn)
             val off = if (pn == 1L) 100 else 0
             val type = p[off].toInt() and 0xFF
@@ -157,8 +159,8 @@ class SqliteFile(file: File) : Closeable {
             when (type) {
                 13 -> for (i in 0 until cells) yield(corrupt(pn) { leafCell(table, p, cellAt(i), pn) })
                 5 -> {
-                    stack.addLast(u32(p, off + 8) to depth + 1)
-                    for (i in cells - 1 downTo 0) stack.addLast(child(p, cellAt(i), pn) to depth + 1)
+                    push(u32(p, off + 8), depth + 1)
+                    for (i in cells - 1 downTo 0) push(child(p, cellAt(i), pn), depth + 1)
                 }
                 else -> fail("página $pn de ${table.name}: tipo $type, se esperaba una página de tabla")
             }
@@ -178,11 +180,11 @@ class SqliteFile(file: File) : Closeable {
         var n = 0L
         val visited = HashSet<Long>()
         val stack = ArrayDeque<Pair<Long, Int>>()
-        stack.addLast(table.rootPage to 0)
+        fun push(pn: Long, depth: Int) { if (!visited.add(pn)) fail("ciclo en el árbol de ${table.name} (página $pn)"); stack.addLast(pn to depth) }
+        push(table.rootPage, 0)
         while (stack.isNotEmpty()) {
             val (pn, depth) = stack.removeLast()
             if (depth > 40) fail("árbol demasiado profundo en ${table.name}")
-            if (!visited.add(pn)) fail("ciclo en el árbol de ${table.name} (página $pn)")
             val p = page(pn); val off = if (pn == 1L) 100 else 0
             val type = p[off].toInt() and 0xFF
             val cells = u16(p, off + 3)
@@ -192,7 +194,7 @@ class SqliteFile(file: File) : Closeable {
             fun cellAt(i: Int): Int = u16(p, off + headerLen + 2 * i).also { if (it < off + headerLen || it >= usable) fail("celda fuera de la página $pn") }
             when (type) {
                 13 -> { for (i in 0 until cells) cellAt(i); n += cells }
-                5 -> { stack.addLast(u32(p, off + 8) to depth + 1); for (i in 0 until cells) stack.addLast(child(p, cellAt(i), pn) to depth + 1) }
+                5 -> { push(u32(p, off + 8), depth + 1); for (i in 0 until cells) push(child(p, cellAt(i), pn), depth + 1) }
                 else -> fail("página $pn de ${table.name}: no es una página de tabla")
             }
         }
@@ -241,11 +243,13 @@ class SqliteFile(file: File) : Closeable {
     private fun decode(t: Table, rec: ByteArray, rowid: Long): Array<Any?> {
         val (hlen, n0) = varint(rec, 0)
         if (hlen < n0 || hlen > rec.size) fail("cabecera de registro no válida en ${t.name}")
+        val cols = t.columns
         val types = ArrayList<Long>()
         var pos = n0
-        while (pos < hlen) { val (st, n) = varint(rec, pos); types += st; pos += n }
+        // Solo los tipos de las columnas de la tabla (A4): un registro manipulado puede declarar millones de tipos en
+        // su cabecera; los que sobran no se usan (el cuerpo empieza en hlen igualmente).
+        while (pos < hlen && (cols.isEmpty() || types.size < cols.size)) { val (st, n) = varint(rec, pos); types += st; pos += n }
         var body = hlen.toInt()
-        val cols = t.columns
         val count = if (cols.isEmpty()) types.size else cols.size
         val out = arrayOfNulls<Any?>(count)
         for (i in 0 until count) {
@@ -359,6 +363,7 @@ object SqliteSchema {
         val endChar = when (q) { '"' -> '"'; '`' -> '`'; '[' -> ']'; '\'' -> '\''; else -> null }
         if (endChar != null) {
             val e = d.indexOf(endChar, 1)
+            if (e < 0) throw SqliteFormatException("identificador sin cerrar: ${d.take(40)}")
             return d.substring(1, e) to d.substring(e + 1)
         }
         val e = d.indexOfFirst { it.isWhitespace() }.let { if (it < 0) d.length else it }

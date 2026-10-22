@@ -219,6 +219,54 @@ class BackupImportTest {
         assertTrue(tmp.listFiles()!!.isEmpty())
     }
 
+    /**
+     * Revisión 22/10 (A3): el tope de bytes de una parte se aplica MIENTRAS se leen sus tablas, no después de montar el
+     * CSV o los ZIP en memoria. Con un tope menor que la tabla `history`, la parte del historial es «demasiado grande» y
+     * no se construye; las demás partes se importan.
+     */
+    @Test fun partByteLimitIsAppliedWhileReadingTheTables() {
+        val tmp = Files.createTempDirectory("rawlimit").toFile()
+        val dbFile = File(tmp, "base.db").also { f -> ZipFile(backup()).use { z -> z.getInputStream(z.getEntry("icdetector_history.db")).use { i -> f.outputStream().use { i.copyTo(it) } } } }
+        com.alexisgordr.cellcase.core.backup.SqliteFile(dbFile).use { db ->
+            val full = com.alexisgordr.cellcase.core.backup.Icd30Exports(db, "3.0.0", 0L).historyCsv()!!
+            // Con un tope de la mitad del CSV no llega a devolver un CSV: se corta al leer la tabla
+            try {
+                com.alexisgordr.cellcase.core.backup.Icd30Exports(db, "3.0.0", 0L, maxHistoryBytes = full.size / 2L).historyCsv()
+                throw AssertionError("debía cortar")
+            } catch (e: com.alexisgordr.cellcase.core.backup.Icd30Exports.PartTooLarge) { assertTrue(e.table, e.table in setOf("history", "profile_evaluations")) }
+            // Con un tope holgado da el mismo CSV byte a byte
+            assertTrue(full.contentEquals(com.alexisgordr.cellcase.core.backup.Icd30Exports(db, "3.0.0", 0L, maxHistoryBytes = full.size * 2L).historyCsv()!!))
+        }
+        dbFile.delete()
+        val r = IcdBackupReader.read(backup(), "c", "c", TestSupport.MADRID, tempDir = tmp, limits = BackupLimits(maxHistoryPartBytes = 50_000))
+        assertEquals(ImportState.IMPORTED, r.state)
+        assertEquals(ImportState.TOO_LARGE, r.backupParts.single { it.kind == ExportKind.HISTORY }.state)
+        assertTrue(r.backupParts.filter { it.kind != ExportKind.HISTORY }.all { it.imported })
+        assertTrue(r.issues.any { it.code == "BACKUP_PART_NOT_IMPORTED" })
+        // Los límites por defecto no cambian nada en una copia normal
+        assertTrue(IcdBackupReader.read(backup(), "c", "c", TestSupport.MADRID, tempDir = tmp).backupParts.all { it.imported })
+        assertTrue(tmp.listFiles()!!.isEmpty())
+    }
+
+    /** Revisión 22/10 (A4): la reconstrucción consulta la cancelación mientras recorre las tablas, no solo entre partes. */
+    @Test fun rebuildingPartsChecksForCancellationInsideTheLoops() {
+        val tmp = Files.createTempDirectory("cancelparts").toFile()
+        val dbFile = File(tmp, "base.db").also { f -> ZipFile(backup()).use { z -> z.getInputStream(z.getEntry("icdetector_history.db")).use { i -> f.outputStream().use { i.copyTo(it) } } } }
+        com.alexisgordr.cellcase.core.backup.SqliteFile(dbFile).use { db ->
+            var calls = 0
+            val ex = com.alexisgordr.cellcase.core.backup.Icd30Exports(db, "3.0.0", 0L, checkpoint = Checkpoint { calls++ })
+            val sites = ex.stableSite()!!.getValue("sites.csv").toString(Charsets.UTF_8).trim().lines().size - 1
+            assertTrue("$calls consultas para $sites sitios", sites > 0 && calls >= sites)
+            // Cancelar dentro de la reconstrucción la interrumpe
+            val cancelled = com.alexisgordr.cellcase.core.backup.Icd30Exports(db, "3.0.0", 0L, checkpoint = Checkpoint { throw CancellationException("cancelado") })
+            try { cancelled.stableSite(); throw AssertionError("debía cancelarse") } catch (_: CancellationException) {}
+            // Y el resultado no cambia por consultar la cancelación
+            assertTrue(ex.stableSite()!!.entries.zip(com.alexisgordr.cellcase.core.backup.Icd30Exports(db, "3.0.0", 0L).stableSite()!!.entries)
+                .all { (a, b) -> a.key == b.key && a.value.contentEquals(b.value) })
+        }
+        tmp.deleteRecursively()
+    }
+
     @Test fun forensicCasesAreBuiltOnlyWhenAsked() {
         val tmp = Files.createTempDirectory("lazy").toFile()
         val dbFile = File(tmp, "base.db").also { f -> ZipFile(backup()).use { z -> z.getInputStream(z.getEntry("icdetector_history.db")).use { i -> f.outputStream().use { i.copyTo(it) } } } }
@@ -263,7 +311,7 @@ class BackupImportTest {
             if (mode == com.alexisgordr.cellcase.core.report.ReportMode.FULL) {
                 assertTrue("$lang: bloque de la copia", text.contains(com.alexisgordr.cellcase.core.i18n.Messages.format(lang, "backup.report.title", emptyList())))
                 assertTrue("$lang: partes en la tabla de archivos", text.contains("SYNTHETIC_icd30_fresh.icdbackup › history.csv"))
-                assertTrue("$lang: versión del lector", text.contains("backup-icd/1.1.0"))
+                assertTrue("$lang: versión del lector", text.contains("backup-icd/1.2.0"))
             }
             assertFalse("$lang $mode: texto sin traducir", Regex("\\b(import\\.backup|backup\\.report|profile\\.(level|lay|k|v|col|abstain|mode|maturity|title|intro))\\.?\\w").containsMatchIn(text))
             com.alexisgordr.cellcase.core.report.ReportBuilder(com.alexisgordr.cellcase.core.report.reportTexts(lang)).writePdf(ctx, a, ByteArrayOutputStream())

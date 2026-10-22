@@ -27,7 +27,8 @@ class CaseBudget(
 
     companion object {
         /**
-         * Filas de datos de un CSV (registros tras la cabecera; los saltos de línea dentro de comillas no cuentan).
+         * Filas de datos de un CSV (registros tras la cabecera; los saltos de línea dentro de comillas no cuentan). Fin de
+         * registro: `\n`, `\r\n` o un `\r` solo.
          * Con las mismas reglas que [com.alexisgordr.cellcase.core.csv.CsvReader]: una comilla abre un campo
          * entrecomillado solo al principio del campo; en medio (`foo"bar`) es una comilla suelta y no abre nada.
          */
@@ -46,8 +47,9 @@ class CaseBudget(
                 } else when (c) {
                     '"'.code -> { if (fieldStart) quoted = true; content = true; fieldStart = false }
                     ','.code -> { content = true; fieldStart = true }
+                    // Fin de registro: \n, \r\n o un \r solo, como CsvReader (un \r seguido de \n cuenta en el \n)
                     '\n'.code -> { if (content) rows++; content = false; fieldStart = true }
-                    '\r'.code -> {}
+                    '\r'.code -> if (i + 1 >= bytes.size || bytes[i + 1].toInt() != '\n'.code) { if (content) rows++; content = false; fieldStart = true }
                     else -> { content = true; fieldStart = false }
                 }
                 i++

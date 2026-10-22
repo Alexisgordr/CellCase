@@ -212,6 +212,29 @@ class SqliteFileTest {
         expectFailure(mutated { b -> b[off] = 7 })
     }
 
+    /**
+     * Revisión 22/10 (A4): una página interior cuyos hijos apuntan todos a la misma página es un error de formato, y se
+     * detecta al apilar el segundo hijo (antes se apilaban todos y la pila crecía con cada página interior).
+     */
+    @Test fun repeatedChildPagesAreACycle() {
+        val (_, off) = interiorPageOfHistory()
+        expectFailure(mutated { b ->
+            val cells = ((b[off + 3].toInt() and 0xFF) shl 8) or (b[off + 4].toInt() and 0xFF)
+            assertTrue("la raíz tiene al menos dos hijos", cells >= 1)
+            val right = b.copyOfRange(off + 8, off + 12)
+            for (i in 0 until cells) {
+                val cell = off + (((b[off + 12 + 2 * i].toInt() and 0xFF) shl 8) or (b[off + 13 + 2 * i].toInt() and 0xFF))
+                right.copyInto(b, cell)      // todos los hijos = el hijo derecho
+            }
+        })
+    }
+
+    /** Revisión 22/10 (A5): un identificador entrecomillado sin cerrar es un error de formato, no una excepción de índice. */
+    @Test fun unclosedQuotedIdentifierIsAFormatError() {
+        for (sql in listOf("CREATE TABLE t (\"abc TEXT, x INTEGER)", "CREATE TABLE t ([abc TEXT)"))
+            try { SqliteSchema.columns(sql); fail(sql) } catch (_: SqliteFormatException) {}
+    }
+
     @Test fun cursorConversionsLikeAndroid() {
         assertEquals("42", CursorValue.string(42L)); assertEquals("1.5", CursorValue.string(1.5))
         assertEquals("100000", CursorValue.string(100000.0)); assertEquals("1e+06", CursorValue.string(1_000_000.0))

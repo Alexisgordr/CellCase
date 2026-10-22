@@ -30,7 +30,7 @@ import java.nio.charset.CodingErrorAction
 import java.nio.charset.StandardCharsets
 
 /** Versión del lector. Se guarda con cada importación: el análisis se reproduce con el lector registrado. */
-const val HISTORY_READER_VERSION = "history-csv/1.2.0"
+const val HISTORY_READER_VERSION = "history-csv/1.2.1"
 
 /** Columnas del historial de ICdetector 2.10.5 (export-formats.md §1.3). */
 object HistoryColumns {
@@ -138,15 +138,19 @@ class HistoryCsvImporter(private val limits: HistoryImportLimits = HistoryImport
         val decoder = StandardCharsets.UTF_8.newDecoder()
             .onMalformedInput(CodingErrorAction.REPORT)
             .onUnmappableCharacter(CodingErrorAction.REPORT)
-        val reader = CsvReader(InputStreamReader(input, decoder).buffered(), maxFieldChars = limits.maxFieldChars)
+        // La BOM se quita ANTES de leer la cabecera (revisión 22/10, A5): si se quita después, una cabecera con la primera
+        // columna entre comillas queda como `\uFEFF"Timestamp"`, la comilla ya no abre campo y la columna no se reconoce.
+        val text = InputStreamReader(input, decoder).buffered()
+        val reader = CsvReader(text, maxFieldChars = limits.maxFieldChars)
         val issues = IssueCollector()
         try {
+            // Dentro del try: el primer carácter ya puede ser UTF-8 no válido (CharacterCodingException, abajo)
+            text.mark(1)
+            val bom = text.read() == 0xFEFF
+            if (!bom) text.reset()
             val headerRec = reader.next() ?: throw ImportRejected(msg("import.fail.el_archivo_esta_vacio"))
-            var header = headerRec.fields
-            if (header.isNotEmpty() && header[0].startsWith("﻿")) {
-                header = listOf(header[0].removePrefix("﻿")) + header.drop(1)
-                issues.add("BOM", Severity.INFO, null, msg("import.import.el_archivo_empieza_con_marca"))
-            }
+            val header = headerRec.fields
+            if (bom) issues.add("BOM", Severity.INFO, null, msg("import.import.el_archivo_empieza_con_marca"))
             val schema = checkHeader(header, issues)
             val headerIndex = HeaderIndex(header)
             val index = headerIndex.index

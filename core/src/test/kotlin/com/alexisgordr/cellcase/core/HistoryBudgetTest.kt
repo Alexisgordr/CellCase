@@ -28,6 +28,21 @@ class HistoryBudgetTest {
         assertEquals(1, CaseBudget.csvRows("A,B\n\"di \"\"hola\"\"\",2\n".toByteArray()))
     }
 
+    /** Un `\r` solo es fin de registro para el lector CSV: el presupuesto debe contar igual (revisión 22/10, A2). */
+    @Test fun csvRowsCountsLoneCarriageReturnsLikeTheReader() {
+        assertEquals(2, CaseBudget.csvRows("A,B\r1,2\r3,4\r".toByteArray()))
+        assertEquals(2, CaseBudget.csvRows("A,B\r1,2\r\r3,4".toByteArray()))          // línea vacía con \r
+        assertEquals(1, CaseBudget.csvRows("A,B\r\"x\ry\",2\r".toByteArray()))       // \r dentro de comillas no cuenta
+        val lf = legacy.readText()
+        val rows = CaseBudget.csvRows(lf.toByteArray())
+        for (eol in listOf("\r\n", "\r")) {
+            val bytes = lf.replace("\n", eol).toByteArray()
+            assertEquals(eol, rows, CaseBudget.csvRows(bytes))
+            val r = ImportPipeline.process(bytes, "h.csv", "h", TestSupport.MADRID, budget = CaseBudget(maxHistoryRows = 10))
+            assertEquals(eol, ImportState.TOO_LARGE, r.state)
+        }
+    }
+
     @Test fun csvRowsMatchesTheRowsTheImporterReads() {
         for (f in listOf(v3, legacy)) {
             val r = ImportPipeline.process(f.readBytes(), f.name, f.name, TestSupport.MADRID)

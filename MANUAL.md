@@ -1,6 +1,6 @@
 # CellCase · User manual
 
-Version 0.2.0 · rules `cellcase-rules/2 · episodes/6 · cross/3` · readers `readers/2.4.0`
+Version 0.2.0 · rules `cellcase-rules/2 · episodes/6 · cross/3` · readers `readers/2.4.1`
 
 This manual explains how to use CellCase, how to read what it shows and what its reports can and cannot say. For what the app is and how to build it, see the [README](README.md). For the rules in detail, see the documents under [`docs/`](docs/).
 
@@ -251,7 +251,7 @@ In short (full rules in [`docs/episode-rules.md`](docs/episode-rules.md), [`docs
 
 ## 12. Limits
 
-Limits are applied **before** loading anything, so an oversized file is rejected with a message rather than exhausting memory. Values in 0.2.0 (`readers/2.4.0`, unchanged since 0.1.0; measurements in [`docs/limits.md`](docs/limits.md)):
+Limits are applied **before** loading anything, so an oversized file is rejected with a message rather than exhausting memory. Values in 0.2.0 (`readers/2.4.1`; measurements in [`docs/limits.md`](docs/limits.md)):
 
 | Limit | Value |
 |---|---|
@@ -262,8 +262,10 @@ Limits are applied **before** loading anything, so an oversized file is rejected
 | CSV field | 8 KiB |
 | Decompressed ZIP entry / whole ZIP | 6 MiB / 8 MiB |
 | Entries per ZIP · compression ratio | 64 · 200 |
+| ZIP central directory | 1 MiB (checked by reading only the end of the file, before opening it) |
 | **History rows per case** | 40,000 in total (about 28 weeks of continuous capture) |
 | **Decompressed ZIP per case** | 8 MiB in total |
+| Each part rebuilt from a backup | the limit of its exported file (history 16 MiB, the rest 8 MiB), applied while reading the tables; a larger part is marked *too large* and the rest of the backup is imported |
 | Forensic case inside a backup | the ZIP limits above; a larger one is marked *too large* without being loaded |
 
 The case budget is reserved in import order: the first files have priority, and the one that does not fit is marked *File too large* and kept, not interpreted.
