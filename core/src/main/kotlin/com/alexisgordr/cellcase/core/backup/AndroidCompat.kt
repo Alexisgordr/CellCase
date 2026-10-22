@@ -94,7 +94,7 @@ internal fun instantText(ms: Long): String = java.time.Instant.ofEpochMilli(ms).
 
 /** `ObservationTime.utcIso`: instante UTC siempre con milisegundos. */
 internal fun utcIsoMillis(ms: Long): String =
-    java.time.format.DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(java.time.ZoneOffset.UTC).format(java.time.Instant.ofEpochMilli(ms))
+    java.time.format.DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.ROOT).withZone(java.time.ZoneOffset.UTC).format(java.time.Instant.ofEpochMilli(ms))
 
 /**
  * JSON con la semántica de `org.json` de Android, que es la que usa ICdetector para leer y escribir: los números
@@ -289,7 +289,7 @@ object AndroidJson {
         for (c in s) when (c) {
             '"' -> b.append("\\\""); '\\' -> b.append("\\\\"); '/' -> b.append("\\/")
             '\t' -> b.append("\\t"); '\b' -> b.append("\\b"); '\n' -> b.append("\\n"); '\r' -> b.append("\\r"); '\u000C' -> b.append("\\f")
-            else -> if (c.code <= 0x1F) b.append(String.format("\\u%04x", c.code)) else b.append(c)
+            else -> if (c.code <= 0x1F) b.append(String.format(java.util.Locale.ROOT, "\\u%04x", c.code)) else b.append(c)
         }
         b.append('"')
     }

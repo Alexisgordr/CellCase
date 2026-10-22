@@ -112,11 +112,17 @@ open class ReportTextsImpl(final override val language: Language) : ReportTexts 
         return when {
             s < 60 -> "${s} s"
             s < 3600 -> t("report.dur.min", s / 60) + if (s % 60 != 0L && s < 600) " ${s % 60} s" else ""
-            s < 48 * 3600 -> t("report.dur.h_min", s / 3600, "%02d".format(s % 3600 / 60))
+            s < 48 * 3600 -> t("report.dur.h_min", s / 3600, String.format(java.util.Locale.ROOT, "%02d", s % 3600 / 60))
             else -> "${s / 86400} d ${s % 86400 / 3600} h"
         }
     }
     private fun local(t: LocalDateTime) = LOCAL.format(t)
+    /**
+     * Hora de una fila: la local del teléfono y, si no la tiene (fila de 3.0 con `Timestamp` inválido y `ObservedAtUtc`
+     * válido), su instante en la zona del informe (revisión 22/10, C2: antes `local!!` lanzaba NullPointerException).
+     */
+    private fun rowTime(ctx: TextContext, o: com.alexisgordr.cellcase.core.model.HistoryObservation): String =
+        o.time.local?.let(::local) ?: o.time.instantOrNull?.let { local(it.atZone(ctx.displayZone).toLocalDateTime()) } ?: o.time.raw
     private fun utc(i: Instant) = UTC.format(i)
     private fun at(ctx: TextContext, i: Instant) = LOCAL.format(i.atZone(ctx.displayZone))
     private fun short(ctx: TextContext, i: Instant) = SHORT.format(i.atZone(ctx.displayZone))
@@ -184,7 +190,8 @@ open class ReportTextsImpl(final override val language: Language) : ReportTexts 
         if (p == null) return "—"
         fun i(x: Instant?) = x?.let { SHORT.format(it.atZone(zone)) } ?: "?"
         return when (p.basis) {
-            PeriodBasis.OBSERVATIONS_LOCAL -> t("report.i.hora_local_del_telefono", p.startText?.let { local(LocalDateTime.parse(it.replace(' ', 'T'))).dropLast(3) } ?: "?", p.endText?.let { local(LocalDateTime.parse(it.replace(' ', 'T'))).dropLast(3) } ?: "?")
+            // El texto se analiza sin confiar en él (C1): un valor que no se pueda leer se muestra tal cual, sin lanzar.
+            PeriodBasis.OBSERVATIONS_LOCAL -> t("report.i.hora_local_del_telefono", p.startText?.let(::periodLocal) ?: "?", p.endText?.let(::periodLocal) ?: "?")
             PeriodBasis.OBSERVATIONS_UTC -> "${i(p.start)} – ${i(p.end)}"
             PeriodBasis.AGGREGATE_LAST_SEEN -> t("report.i.ultimas_rutas_vistas_entre_y", i(p.start), i(p.end))
             PeriodBasis.AGGREGATE_FIRST_LAST -> t("report.i.primer_y_ultimo_registro_agregado", i(p.start), i(p.end))
@@ -192,6 +199,9 @@ open class ReportTextsImpl(final override val language: Language) : ReportTexts 
             PeriodBasis.DAYS_LOCAL -> "${p.startDate?.let { DATE.format(it) }} – ${p.endDate?.let { DATE.format(it) }}"
         }
     }
+
+    private fun periodLocal(text: String): String =
+        try { local(LocalDateTime.parse(text.trim().replace(' ', 'T'))).dropLast(3) } catch (_: java.time.format.DateTimeParseException) { text.trim() }
 
     fun countsText(r: ImportResult): String = when (r.kind) {
         ExportKind.HISTORY -> t("report.countsText.filas", int(r.counts["rows"] ?: 0))
@@ -630,7 +640,7 @@ open class ReportTextsImpl(final override val language: Language) : ReportTexts 
                 shortInterpretation(e), priorityLabel(e.priority), relevanceShort(a.assessment.perEpisode.getValue(e.number).relevance))
         }.toMutableList()
         if (many) eps.filter { it.priority == Priority.CONTEXT }.groupBy { patternLabel(it.mainPattern, it) }.forEach { (k, l) ->
-            rows += listOf("${int(l.size)}", "${short(ctx, l.minOf { it.start }).take(5)}–${short(ctx, l.maxOf { it.start }).take(5)}", t("report.incidents.agregado", k), "—", "—", t("report.priorityLabel.contexto"),
+            rows += listOf("${int(l.size)}", "${fmt.DAY.format(l.minOf { it.start }.atZone(ctx.displayZone))}–${fmt.DAY.format(l.maxOf { it.start }.atZone(ctx.displayZone))}", t("report.incidents.agregado", k), "—", "—", t("report.priorityLabel.contexto"),
                 l.map { relevanceShort(a.assessment.perEpisode.getValue(it.number).relevance) }.distinct().joinToString(" / "))
         }
         out += Block.Table(cols, rows, t("report.incidents.incidencias_en_orden_cronologico_observacion"))
@@ -716,7 +726,7 @@ open class ReportTextsImpl(final override val language: Language) : ReportTexts 
     private fun gloss(original: String): String = ReasonGlossary.explain(original.take(160), language)?.let { t("report.quotes.gloss", it) } ?: ""
 
     private fun quotes(ctx: TextContext, e: Episode, withDate: Boolean): List<String> = e.collectorSignals.map { s ->
-        (if (withDate) short(ctx, s.start) + ":" + "%02d".format(s.start.atZone(ctx.displayZone).second) else hms(ctx, s.start)) + " · " + when (s.source) {
+        (if (withDate) short(ctx, s.start) + ":" + String.format(java.util.Locale.ROOT, "%02d", s.start.atZone(ctx.displayZone).second) else hms(ctx, s.start)) + " · " + when (s.source) {
             SignalSource.HISTORY_COLLECTOR -> t("report.quotes.historial", s.identity?.joinKey?.let { ctx.cells.of(it) } ?: "?", s.text.take(160)) + gloss(s.text)
             SignalSource.FORENSIC_CASE -> t("report.quotes.caso_forense_hasta", s.text, hms(ctx, s.end))
             SignalSource.STABLE_SITE_SHADOW -> t("report.quotes.stable_site", s.text) + gloss(s.text)
@@ -1326,7 +1336,7 @@ open class ReportTextsImpl(final override val language: Language) : ReportTexts 
         }
         if (ha != null && ha.sampling.evaluable && ha.sampling.gaps.isNotEmpty()) out += Block.Table(
             listOf(Column(t("report.chronology.desde_ultima_fila_antes"), 3f), Column(t("report.chronology.hasta_primera_fila_despues"), 3f), Column(t("report.chronology.duracion"), 1.2f, Align.RIGHT, noWrap = true)),
-            ha.sampling.gaps.sortedByDescending { it.duration }.take(10).map { g -> listOf("${local(g.before.time.local!!)} · ${ref(g.before.provenance)}", "${local(g.after.time.local!!)} · ${ref(g.after.provenance)}", dur(g.duration)) },
+            ha.sampling.gaps.sortedByDescending { it.duration }.take(10).map { g -> listOf("${rowTime(ctx, g.before)} · ${ref(g.before.provenance)}", "${rowTime(ctx, g.after)} · ${ref(g.after.provenance)}", dur(g.duration)) },
             t("report.chronology.intervalos_sin_registros_de_60"))
         return out
     }

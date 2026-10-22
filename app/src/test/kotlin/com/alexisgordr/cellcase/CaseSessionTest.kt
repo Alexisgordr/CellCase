@@ -85,4 +85,26 @@ class CaseSessionTest {
         assertEquals(2, notices.size)
         withTimeout(1000) { }
     }
+
+    /**
+     * Revisión 22/10 (C4): al girar la pantalla, la pantalla vuelve a pedir abrir el mismo expediente. Si la carga
+     * inicial seguía en curso, se lanzaba otra y salía un aviso de error «operación en curso» sin que el usuario hubiera
+     * hecho nada. Mientras se carga o ya está cargado, abrir el mismo expediente no hace nada.
+     */
+    @Test fun reopeningTheSameCaseWhileItLoadsDoesNothing() = runBlocking {
+        val session = CaseSession()
+        assertTrue(session.needsLoad("a", loaded = false))        // nada abierto
+        session.open("a")
+        assertTrue(session.needsLoad("a", loaded = false))        // abierto, sin cargar y sin trabajo
+        val release = CountDownLatch(1)
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        val job = scope.launch { withContext(Dispatchers.IO) { release.await() } }
+        session.track(job)
+        assertFalse("girar mientras carga", session.needsLoad("a", loaded = false))
+        assertTrue("otro expediente sí se carga", session.needsLoad("b", loaded = false))
+        release.countDown(); job.join()
+        assertTrue("terminó sin publicar (falló): se puede volver a cargar", session.needsLoad("a", loaded = false))
+        assertFalse("ya cargado", session.needsLoad("a", loaded = true))
+        scope.cancel()
+    }
 }

@@ -83,6 +83,9 @@ class ReportRenderer(private val theme: Theme = Theme()) {
     var pageCount = 0
         private set
 
+    /** Textos de cada página tras [render], en orden de dibujo (solo lectura; para comprobar la maquetación). */
+    val pageTexts: List<List<String>> get() = pages.map { p -> p.cmds.filterIsInstance<Cmd.Text>().map { it.text } }
+
     fun render(document: ReportDocument, info: PdfInfo, out: OutputStream) {
         doc = document
         pages.clear(); tableNo = 0; figureNo = 0
@@ -125,14 +128,17 @@ class ReportRenderer(private val theme: Theme = Theme()) {
 
     // ───────────────────────── maquetación ─────────────────────────
 
-    private fun newPage(cover: Boolean = false) { cur = Page(cover); pages += cur; y = theme.marginTop }
+    private fun newPage(cover: Boolean = false) { cur = Page(cover); pages += cur; y = theme.marginTop; afterTopHeadings = -1f }
+    /** Posición tras los títulos con los que empieza la página (-1 si la página no empieza con títulos o ya hay más). */
+    private var afterTopHeadings = -1f
     private fun atTop() = y <= theme.marginTop + 1f
     private fun ensure(h: Float) { if (y + h > bottom && !atTop()) newPage() }
     private fun remaining() = bottom - y
     private fun add(c: Cmd) { cur.cmds += c }
 
     private fun layout() {
-        val blocks = doc.blocks
+        // Una tabla sin columnas no tiene nada que dibujar; se quita antes de maquetar (C6: lanzaba NoSuchElementException).
+        val blocks = doc.blocks.filter { it !is Block.Table || it.columns.isNotEmpty() }
         newPage(cover = (blocks.firstOrNull() as? Block.Cover)?.compact == false)
         for ((i, b) in blocks.withIndex()) {
             when (b) {
@@ -143,7 +149,9 @@ class ReportRenderer(private val theme: Theme = Theme()) {
                     while (j < blocks.size && blocks[j] is Block.Heading) { need += headingHeight(blocks[j] as Block.Heading); j++ }
                     if (j < blocks.size) need += openingWithTrail(blocks, j)
                     if (!atTop() && y + need > bottom) newPage()
+                    val onTop = atTop() || y == afterTopHeadings
                     heading(b)
+                    afterTopHeadings = if (onTop) y else -1f
                 }
                 is Block.Paragraph -> paragraph(b.text, b.style, tail = trail(blocks, i))
                 is Block.Bullets -> bullets(b.items, b.style, tail = trail(blocks, i))
@@ -473,7 +481,9 @@ class ReportRenderer(private val theme: Theme = Theme()) {
         val head = b.columns.mapIndexed { i, c -> wrap(c.header, PdfFont.BOLD, theme.tableSize, ws[i] - 6f).size }.max() * lead + 6f
         val firstTwo = b.rows.take(2).sumOf { r -> (b.columns.mapIndexed { i, c -> cellLines(c, r.getOrElse(i) { "" }, ws[i]).size }.maxOrNull() ?: 1).coerceAtLeast(1) * lead.toDouble() + 6f }.toFloat()
         val cap = b.caption?.let { wrap("${doc.tableLabel} 00. $it", PdfFont.BOLD, 9f, contentW).size * 12.5f + 1.5f } ?: 0f
-        return min(cap + head + firstTwo, usableH * 0.6f)
+        // El mismo mínimo que exige [table] (revisión 22/10, C6): si se limitaba al 60 % de la página, con una primera
+        // fila muy alta el título se quedaba solo al pie y la tabla empezaba en la siguiente. Como mucho, una página.
+        return min(cap + head + firstTwo, usableH)
     }
 
     private fun table(columns: List<Column>, rows: List<List<String>>, caption: String?) {
@@ -486,7 +496,8 @@ class ReportRenderer(private val theme: Theme = Theme()) {
         val captionH = if (caption != null) 14f else 0f
         val full = captionH + headerH + rowH.sum()
         // Tabla corta: entera en una página. Tabla larga: se parte, pero con al menos dos filas aquí.
-        if (!atTop() && full > remaining()) {
+        // Si encima solo están los títulos con los que empieza la página, saltar no ayuda: dejaría el título solo (C6).
+        if (!atTop() && y != afterTopHeadings && full > remaining()) {
             val firstTwo = captionH + headerH + rowH.take(2).sum()
             if (full <= usableH && remaining() < usableH * 0.35f) newPage()
             else if (firstTwo > remaining()) newPage()

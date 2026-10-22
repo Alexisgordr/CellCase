@@ -165,7 +165,7 @@ class RegionalFormat(val lang: Language) {
 
     /** Separador de millares: en español solo desde 5 cifras con punto (RAE); en inglés coma desde 4 cifras. */
     fun int(v: Long): String {
-        val s = kotlin.math.abs(v).toString()
+        val s = v.toString().removePrefix("-")   // sin abs: abs(Long.MIN_VALUE) desborda (C6)
         val (sep, min) = if (lang == Language.ES) "." to 5 else "," to 4
         val grouped = if (s.length < min) s else s.reversed().chunked(3).joinToString(sep).reversed()
         return if (v < 0) "-$grouped" else grouped

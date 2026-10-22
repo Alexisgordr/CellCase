@@ -49,14 +49,20 @@ data class RecordedTime(
 object CaptureTime {
     /** Formato de hora local de ICdetector: `yyyy-MM-dd HH:mm:ss`, sin zona. */
     private val LOCAL_SECONDS: DateTimeFormatter =
-        DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss").withResolverStyle(ResolverStyle.STRICT)
+        DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss", java.util.Locale.ROOT).withResolverStyle(ResolverStyle.STRICT)
     private val LOCAL_DATE: DateTimeFormatter =
-        DateTimeFormatter.ofPattern("uuuu-MM-dd").withResolverStyle(ResolverStyle.STRICT)
+        DateTimeFormatter.ofPattern("uuuu-MM-dd", java.util.Locale.ROOT).withResolverStyle(ResolverStyle.STRICT)
 
+    /**
+     * La hora se guarda recortada (revisión 22/10, C1): es la que se analiza, y con espacios al final no se podía
+     * volver a leer en el informe ni coincidía en las claves de duplicados. El campo original, con sus espacios, sigue
+     * en las columnas crudas de la fila.
+     */
     fun parseLocalSeconds(raw: String, zone: DeclaredZone?): RecordedTime {
-        val local = try { LocalDateTime.parse(raw.trim(), LOCAL_SECONDS) } catch (_: DateTimeParseException) { null }
-            ?: return RecordedTime(raw, null, null)
-        return RecordedTime(raw, local, resolve(local, zone))
+        val text = raw.trim()
+        val local = try { LocalDateTime.parse(text, LOCAL_SECONDS) } catch (_: DateTimeParseException) { null }
+            ?: return RecordedTime(text, null, null)
+        return RecordedTime(text, local, resolve(local, zone))
     }
 
     fun resolve(local: LocalDateTime, zone: DeclaredZone?): TimeResolution {

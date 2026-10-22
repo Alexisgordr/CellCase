@@ -178,7 +178,7 @@ class PdfWriter(private val info: PdfInfo) {
         obj("<< /Type /Catalog /Pages 2 0 R /PageMode /UseNone" + (info.language?.filter { it.isLetterOrDigit() || it == '-' }?.let { " /Lang ($it)" } ?: "") + " >>")
         obj("<< /Type /Pages /Count $n /Kids [${(0 until n).joinToString(" ") { "${firstPageObj + it * 2} 0 R" }}] >>")
         for (font in PdfFont.values()) obj("<< /Type /Font /Subtype /Type1 /BaseFont /${font.baseName} /Encoding /WinAnsiEncoding >>")
-        val date = "D:" + DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(ZoneOffset.UTC).format(info.creationDate) + "Z"
+        val date = "D:" + DateTimeFormatter.ofPattern("yyyyMMddHHmmss", java.util.Locale.ROOT).withZone(ZoneOffset.UTC).format(info.creationDate) + "Z"
         obj("<< /Title ${pdfText(info.title)} /Subject ${pdfText(info.subject)} /Producer ${pdfText(info.producer)} /CreationDate ($date) >>")
         val fonts = PdfFont.values().withIndex().joinToString(" ") { (i, ft) -> "/${ft.resourceName} ${3 + i} 0 R" }
         pages.forEachIndexed { i, p ->

@@ -109,7 +109,8 @@ class CaseViewModel(app: Application) : AndroidViewModel(app) {
     private val caseId: String? get() = session.caseId
 
     fun open(id: String) {
-        if (caseId == id && _snapshot.value != null) return
+        // El mismo expediente, ya cargado o cargándose (p. ej. al girar la pantalla): nada que hacer (C4).
+        if (!session.needsLoad(id, loaded = _snapshot.value != null)) return
         if (session.open(id)) {
             // Otro expediente: se cancela la carga del anterior y no se arrastra nada suyo.
             _busy.value = null
@@ -221,7 +222,9 @@ class CaseViewModel(app: Application) : AndroidViewModel(app) {
             // Un expediente borrado (UserFacingException) o un disco lleno (SQLiteException) dan un aviso, no un cierre.
             val affects = guardedCall(::failed) { withContext(Dispatchers.IO) { repo.updateCase(updated) } } ?: return@launch
             if (!session.isCurrent(updated.id)) return@launch
-            _snapshot.value = s.copy(case = updated)
+            // Sobre el valor ACTUAL, no sobre la copia de antes de guardar (revisión 22/10, C5): un trabajo que haya
+            // publicado entretanto (un informe nuevo, una recarga) no se pierde, y la edición tampoco.
+            _snapshot.update { cur -> if (cur?.case?.id == updated.id) cur.copy(case = updated) else cur }
             if (reanalyze || affects) {
                 reload()
                 if (s.reports.isNotEmpty()) _notice.value = Notice(UiText.res(R.string.notice_reanalysed), false)
@@ -267,7 +270,8 @@ class CaseViewModel(app: Application) : AndroidViewModel(app) {
             detail(UiText.res(R.string.busy_layout))
             val rec = withContext(Dispatchers.IO) { repo.generateReport(s, mode, language, crossAnnex) }
             if (!session.isCurrent(s.case.id)) return@run
-            _snapshot.value = s.copy(reports = listOf(rec) + s.reports)
+            // Sobre el valor actual (C5): una edición guardada mientras se generaba el informe se conserva.
+            _snapshot.update { cur -> if (cur?.case?.id == s.case.id) cur.copy(reports = listOf(rec) + cur.reports) else cur }
             _notice.value = Notice(UiText.plural(R.plurals.notice_report_done, rec.pages, rec.pages), false)
         }
     }

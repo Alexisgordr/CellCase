@@ -32,6 +32,12 @@ class CaseSession {
 
     val busy: Boolean get() = job?.isActive == true
 
+    /**
+     * ¿Hay que cargar [id] al abrirlo? No si ya es el abierto y está cargado ([loaded]) o se está cargando o trabajando
+     * en él (revisión 22/10, C4: al girar la pantalla se lanzaba otra carga y salía el aviso «operación en curso»).
+     */
+    fun needsLoad(id: String, loaded: Boolean): Boolean = !(caseId == id && (loaded || busy))
+
     /** Registra el trabajo en curso (uno a la vez). */
     fun track(j: Job) { job = j }
 
